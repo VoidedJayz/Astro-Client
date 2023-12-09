@@ -1,2 +1,2 @@
 # LethalModz
-Just my modpack for my friends.
+Wooooo spaghetti codeee
