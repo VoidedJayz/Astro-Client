@@ -89,7 +89,7 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.1.8";
+        public static string currentVersion = "1.1.9";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
@@ -142,13 +142,7 @@ internal class Program
                 switch (currOption)
                 {
                     case "0":
-                        var modz = server.DownloadString(new Uri("https://eternityhub.xyz/AstroBoyz/Web/Files/mods"));
-                        while (server.IsBusy)
-                        {
-                            Thread.Sleep(500);
-                        }
-                        Console.Clear();
-                        ConsoleAnimation(modz);
+                        GetInstalledModNames();
                         ConsoleAnimation("Press any key to continue...");
                         Console.ReadLine();
                         AppHandler();
@@ -469,6 +463,7 @@ internal class Program
                 {
                     ConsoleAnimation($"New Version Available! {lethalVersion} We recommend updating astro to the latest version.");
                     ConsoleAnimation("Press any key to continue...");
+                    Console.ReadLine();
                 }
                 else
                 {
@@ -480,6 +475,26 @@ internal class Program
         }
 
         // Utility Functions
+        public static void GetInstalledModNames()
+        {
+            Console.Clear();
+            try
+            {
+                foreach (var files in Directory.GetFiles(pluginsPath))
+                { 
+                    if (files.Contains(".dll"))
+                    {
+                        var tmp = files.Split(new string[] { "plugins" }, StringSplitOptions.None);
+                        var name = tmp[1].Split(new string[] { ".dll" }, StringSplitOptions.None);
+                        ConsoleAnimation(name[0]);
+                    }   
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleAnimation($"Error: {ex.Message}");
+            }
+        }
         public static void ForceAppUpdate()
         {
             Process.Start("LethalUpdater.exe");
