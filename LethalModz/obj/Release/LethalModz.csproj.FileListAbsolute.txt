@@ -8,9 +8,7 @@ C:\Users\voide\source\repos\LethalModz\LethalModz\obj\Release\LethalModz.pdb
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\bin\Release\LethalModz.exe.config
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\bin\Release\LethalModz.exe
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\bin\Release\LethalModz.pdb
-C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\bin\Release\Colorful.Console.dll
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Release\LethalModz.csproj.AssemblyReference.cache
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Release\LethalModz.csproj.CoreCompileInputs.cache
-C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Release\LethalModz.csproj.CopyComplete
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Release\LethalModz.exe
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Release\LethalModz.pdb

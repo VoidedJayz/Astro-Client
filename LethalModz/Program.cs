@@ -89,7 +89,7 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.1.9";
+        public static string currentVersion = "1.2.0";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
@@ -126,11 +126,11 @@ internal class Program
             try
             {
                 // Console Title Displays Lethal Company Location
-                Console.Title = $"ASTRO BOYZ! | {Utilities.lethalCompanyPath.Split(new string[] { "Files " }, StringSplitOptions.None)[1]} |";
+                Console.Title = $"Astro Boyz | {Utilities.lethalCompanyPath.Split(new string[] { "Files " }, StringSplitOptions.None)[1]} |";
             }
             catch
             {
-                Console.Title = $"ASTRO BOYZ! | {Utilities.lethalCompanyPath} |";
+                Console.Title = $"Astro Boyz | {Utilities.lethalCompanyPath} |";
             }
             // Menu Options
             GenerateMenu();
@@ -181,19 +181,37 @@ internal class Program
                         break;
                     case "6":
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        ConsoleAnimation("Opening...");
-                        OpenLethalCompanyFolder();
+                        ConsoleAnimation("Closing...");
+                        try
+                        {
+                            foreach (var process in Process.GetProcessesByName("Lethal Company"))
+                            {
+                                process.Kill();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ConsoleAnimation($"Error: {ex.Message}");
+                        }
                         Thread.Sleep(1000);
                         Console.Clear();
                         AppHandler();
                         break;
                     case "7":
                         Console.ForegroundColor = ConsoleColor.Yellow;
+                        ConsoleAnimation("Opening...");
+                        OpenLethalCompanyFolder();
+                        Thread.Sleep(1000);
+                        Console.Clear();
+                        AppHandler();
+                        break;
+                    case "8":
+                        Console.ForegroundColor = ConsoleColor.Yellow;
                         ConsoleAnimation("Updating...");
                         ForceAppUpdate();
                         Environment.Exit(0);
                         break;
-                    case "8":
+                    case "9":
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         ConsoleAnimation("Removing...");
                         if (File.Exists("cpath.txt"))
@@ -594,11 +612,11 @@ internal class Program
             GenerateOption("Remove Modz.", "2", ConsoleColor.Magenta);
             GenerateOption("Enable/Disable Brutal Company.", "3/4", ConsoleColor.Magenta);
             Console.WriteLine(">-----------------------------------<");
-            GenerateOption("Start Lethal Company.", "5", ConsoleColor.Magenta);
-            GenerateOption("Open Lethal Company Folder.", "6", ConsoleColor.Magenta);
+            GenerateOption("Start/Stop Lethal Company.", "5/6", ConsoleColor.Magenta);
+            GenerateOption("Open Lethal Company Folder.", "7", ConsoleColor.Magenta);
             Console.WriteLine(">-----------------------------------<");
-            GenerateOption("(FORCE) Update ASTRO BOYZ.", "7", ConsoleColor.Magenta);
-            GenerateOption("Remove Custom Path.", "8", ConsoleColor.Magenta);
+            GenerateOption("(FORCE) Update ASTRO BOYZ.", "8", ConsoleColor.Magenta);
+            GenerateOption("Remove Custom Path.", "9", ConsoleColor.Magenta);
             Console.WriteLine(">-----------------------------------<\n\n");
             GenerateOption("Option : ", "?", ConsoleColor.Magenta, false);
         }
