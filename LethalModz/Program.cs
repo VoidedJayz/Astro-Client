@@ -22,7 +22,7 @@ internal class Program
     private static void Main(string[] args)
     {
         // Begin Application
-        Console.Title = $"ASTRO BOYZ {Utilities.currentVersion}";
+        Console.Title = $"Astro Boyz {Utilities.currentVersion}";
         Console.CursorVisible = false;
         Console.SetWindowSize(100, 30);
         Utilities.lethalCompanyPath = Utilities.GetSteamPath() + "\\steamapps\\common\\Lethal Company";
@@ -89,11 +89,13 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.2.0";
+        public static string currentVersion = "1.2.5";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
         public static string pluginsPath = $"{bepInExPath}\\plugins";
+        public static string serverUrl = "https://astroswrld.xyz/AstroClient/";
+        public static string modzUrl = "https://astroswrld.xyz/AstroClient/Files/CurrentModz";
         public static WebClient server = new WebClient();
 
         // Console Functions
@@ -285,11 +287,16 @@ internal class Program
             using (var client = server)
             {
                 // More spaghetti code yayyyyy
-                SetColor(ConsoleColor.Yellow);
-                ConsoleAnimation("Loader Started! Downloading Zip...");
+                SetColor(ConsoleColor.Magenta);
+                ConsoleAnimation("Downloading Zip...");
                 try
                 {
-                    client.DownloadFileAsync(new Uri("https://eternityhub.xyz/AstroBoyz/Web/Files/CurrentModz.zip"), $"{lethalCompanyPath}\\temp_astro.zip");
+                    var location = client.DownloadString(modzUrl);
+                    client.DownloadProgressChanged += (s, e) =>
+                    {
+                        Console.Title = $"ASTRO BOYZ! | Downloading... | {e.ProgressPercentage}% ({e.BytesReceived}/{e.TotalBytesToReceive})";
+                    };
+                    client.DownloadFileAsync(new Uri(location), $"{lethalCompanyPath}\\temp_astro.zip");
                 }
                 catch (Exception ex)
                 {
@@ -310,7 +317,7 @@ internal class Program
                     {
                         for (int i = 0; i <= archive.Entries.Count; i++)
                         {
-                            progress.Report((double)i / 100);
+                            progress.Report((double)i / archive.Entries.Count);
                             Console.Title = $"ASTRO BOYZ! | Installing Modz... | {i}/{archive.Entries.Count}";
                             Thread.Sleep(20);
                         }
@@ -464,12 +471,16 @@ internal class Program
             using (var client = server)
             {
                 // Check Versions
-                var updVersion = client.DownloadString("https://eternityhub.xyz/AstroBoyz/Web/Files/uv");
-                var lethalVersion = client.DownloadString("https://eternityhub.xyz/AstroBoyz/Web/Files/av");
+                InitializeHeader(client);
+                var updVersion = client.DownloadString("https://astroswrld.xyz/AstroClient/Versions/uv");
+
+                InitializeHeader(client);
+                var lethalVersion = client.DownloadString("https://astroswrld.xyz/AstroClient/Versions/av");
                 ConsoleAnimation($"Grabbed Versions! [Step 1]");
 
                 // Download Updater
-                client.DownloadFileAsync(new Uri("https://eternityhub.xyz/AstroBoyz/Web/Files/LethalUpdater.exe"), $"LethalUpdater.exe");
+                InitializeHeader(client);
+                client.DownloadFileAsync(new Uri("https://astroswrld.xyz/AstroClient/Files/LethalUpdater.exe"), $"LethalUpdater.exe");
                 while (client.IsBusy)
                 {
                     Thread.Sleep(100);
@@ -578,6 +589,13 @@ internal class Program
         }
 
         // Misc Functions
+        public static void InitializeHeader(WebClient client)
+        {
+            // absolutely dogshit way of fixing 403 Forbidden but whatever
+            // Have to use it at each request because for some reason the webclient disposes after one request
+            client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; " +
+                                  "Windows NT 5.2; .NET CLR 1.0.3705;)");
+        }
         public static void StopResizing()
         {
             // Thanks CoPilot for Generating This
