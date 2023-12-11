@@ -89,13 +89,12 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.2.5";
+        public static string currentVersion = "1.2.8";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
         public static string pluginsPath = $"{bepInExPath}\\plugins";
-        public static string serverUrl = "https://astroswrld.xyz/AstroClient/";
-        public static string modzUrl = "https://astroswrld.xyz/AstroClient/Files/CurrentModz";
+        public static string modzUrl = "https://cdn.astroswrld.club/secure/Files/modpack.zip";
         public static WebClient server = new WebClient();
 
         // Console Functions
@@ -291,12 +290,11 @@ internal class Program
                 ConsoleAnimation("Downloading Zip...");
                 try
                 {
-                    var location = client.DownloadString(modzUrl);
                     client.DownloadProgressChanged += (s, e) =>
                     {
                         Console.Title = $"ASTRO BOYZ! | Downloading... | {e.ProgressPercentage}% ({e.BytesReceived}/{e.TotalBytesToReceive})";
                     };
-                    client.DownloadFileAsync(new Uri(location), $"{lethalCompanyPath}\\temp_astro.zip");
+                    client.DownloadFileAsync(new Uri(GenerateSecureDownload(modzUrl, 30)), $"{lethalCompanyPath}\\temp_astro.zip");
                 }
                 catch (Exception ex)
                 {
@@ -319,7 +317,7 @@ internal class Program
                         {
                             progress.Report((double)i / archive.Entries.Count);
                             Console.Title = $"ASTRO BOYZ! | Installing Modz... | {i}/{archive.Entries.Count}";
-                            Thread.Sleep(20);
+                            Thread.Sleep(5);
                         }
                     }
 
@@ -471,16 +469,14 @@ internal class Program
             using (var client = server)
             {
                 // Check Versions
-                InitializeHeader(client);
-                var updVersion = client.DownloadString("https://astroswrld.xyz/AstroClient/Versions/uv");
+                var verions = server.DownloadString(GenerateSecureDownload("https://cdn.astroswrld.club/secure/Versions/version", 10));
+                var updVersion = verions.Split('|')[0];
+                var lethalVersion = verions.Split('|')[1];
 
-                InitializeHeader(client);
-                var lethalVersion = client.DownloadString("https://astroswrld.xyz/AstroClient/Versions/av");
                 ConsoleAnimation($"Grabbed Versions! [Step 1]");
 
                 // Download Updater
-                InitializeHeader(client);
-                client.DownloadFileAsync(new Uri("https://astroswrld.xyz/AstroClient/Files/LethalUpdater.exe"), $"LethalUpdater.exe");
+                client.DownloadFileAsync(new Uri(GenerateSecureDownload("https://cdn.astroswrld.club/secure/Files/LethalUpdater.exe", 30)), $"LethalUpdater.exe");
                 while (client.IsBusy)
                 {
                     Thread.Sleep(100);
@@ -589,13 +585,6 @@ internal class Program
         }
 
         // Misc Functions
-        public static void InitializeHeader(WebClient client)
-        {
-            // absolutely dogshit way of fixing 403 Forbidden but whatever
-            // Have to use it at each request because for some reason the webclient disposes after one request
-            client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; " +
-                                  "Windows NT 5.2; .NET CLR 1.0.3705;)");
-        }
         public static void StopResizing()
         {
             // Thanks CoPilot for Generating This
@@ -608,6 +597,14 @@ internal class Program
             {
                 DeleteMenu(sysMenu, SC_SIZE, MF_BYCOMMAND);
             }
+        }
+        public static string GenerateSecureDownload(string url, int expires)
+        {
+            url = "https://api.astroswrld.club/api/v1/request-token?url=" + url + "&expires=" + expires + "&pureRes=true";
+
+            var response = server.DownloadString(url);
+            var resp = response.Split('"');
+            return resp[1];
         }
         public static void GenerateMenu()
         {
@@ -658,10 +655,19 @@ internal class Program
         }
     }
 
+    public class ServerObj
+    {
+        public string url { get; set; }
+    }
+    public class AstroObj
+    {
+        public string astroVers { get; set; }
+        public string updaterVers { get; set; }
+    }
     // Thanks again CoPilot for Generating This
     public class ProgressBar : IDisposable, IProgress<double>
     {
-        private const int blockCount = 10;
+        private const int blockCount = 35;
         private readonly TimeSpan animationInterval = TimeSpan.FromSeconds(1.0 / 8);
         private const string animation = @"|/-\";
 
