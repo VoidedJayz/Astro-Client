@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LethalModz", "LethalModz\Le
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LethalUpdater", "..\LethalUpdater\LethalUpdater\LethalUpdater.csproj", "{5935337B-F360-4BD3-8FAE-E1EC91117DE5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstroMenu", "AstroMenu\AstroMenu.csproj", "{76688874-F93B-4711-BFBC-B4B77648E2EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5935337B-F360-4BD3-8FAE-E1EC91117DE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5935337B-F360-4BD3-8FAE-E1EC91117DE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5935337B-F360-4BD3-8FAE-E1EC91117DE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76688874-F93B-4711-BFBC-B4B77648E2EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76688874-F93B-4711-BFBC-B4B77648E2EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76688874-F93B-4711-BFBC-B4B77648E2EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76688874-F93B-4711-BFBC-B4B77648E2EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

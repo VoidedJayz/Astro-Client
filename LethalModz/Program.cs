@@ -89,7 +89,7 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.2.8";
+        public static string currentVersion = "1.2.9";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
@@ -625,7 +625,10 @@ internal class Program
             GenerateOption("List Mods", "0", ConsoleColor.Magenta);
             GenerateOption("Install Modz.", "1", ConsoleColor.Magenta);
             GenerateOption("Remove Modz.", "2", ConsoleColor.Magenta);
-            GenerateOption("Enable/Disable Brutal Company.", "3/4", ConsoleColor.Magenta);
+            GenerateOption("Enable/Disable Brutal Company.", "3/4", ConsoleColor.Magenta, false);
+            SetColor(ConsoleColor.DarkRed);
+            Console.Write(" (BROKEN)\n");
+            SetColor(ConsoleColor.Magenta);
             Console.WriteLine(">-----------------------------------<");
             GenerateOption("Start/Stop Lethal Company.", "5/6", ConsoleColor.Magenta);
             GenerateOption("Open Lethal Company Folder.", "7", ConsoleColor.Magenta);
