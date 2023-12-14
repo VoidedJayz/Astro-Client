@@ -1,4 +1,4 @@
-# LethalModz
+# LethalModz & Updater
 Wooooo spaghetti codeee
 
 
