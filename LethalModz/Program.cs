@@ -804,13 +804,14 @@ internal class Program
         public static void GenerateMenu()
         {
             SetColor(ConsoleColor.DarkMagenta);
-            CenterText("          :::        ::::::::   :::::::::::   :::::::::       :::::::: \r");
-            CenterText("       :+: :+:     :+:    :+:      :+:       :+:    :+:     :+:    :+: \r");
-            CenterText("     +:+   +:+    +:+             +:+       +:+    +:+     +:+    +:+  \r");
-            CenterText("   +#++:++#++:   +#++:++#++      +#+       +#++:++#:      +#+    +:+   \r");
-            CenterText("  +#+     +#+          +#+      +#+       +#+    +#+     +#+    +#+    \r");
-            CenterText(" #+#     #+#   #+#    #+#      #+#       #+#    #+#     #+#    #+#     \r");
-            CenterText("###     ###    ########       ###       ###    ###      ########       \n");
+            CenterText("     **      ******** ********** *******     *******         **      **  **** ");
+            CenterText("    ****    **////// /////**/// /**////**   **/////**       /**     /** */// *");
+            CenterText("   **//**  /**           /**    /**   /**  **     //**      /**     /**/    /*");
+            CenterText("  **  //** /*********    /**    /*******  /**      /**      //**    **    *** ");
+            CenterText(" **********////////**    /**    /**///**  /**      /**       //**  **    *//  ");
+            CenterText("/**//////**       /**    /**    /**  //** //**     **         //****    *     ");
+            CenterText("/**     /** ********     /**    /**   //** //*******           //**    ******");
+            CenterText("//      // ////////      //     //     //   ///////             //     ////// ");
             SetColor(ConsoleColor.DarkBlue);
             ConsoleAnimation($"Welcome, {Environment.UserName}! (STEAM: {currentSteamId})");
             ConsoleAnimation("Please type a numbered option below, then press enter.");
@@ -827,7 +828,7 @@ internal class Program
             });
             GenerateOption(new AstroOption()
             {
-                option = "Install Mods.",
+                option = "Install Mods",
                 identity = "1",
                 color = ConsoleColor.Magenta,
                 matchMenu = true,
@@ -835,7 +836,7 @@ internal class Program
             });
             GenerateOption(new AstroOption()
             {
-                option = "Remove Mods.",
+                option = "Remove Mods",
                 identity = "2",
                 color = ConsoleColor.Magenta,
                 matchMenu = true,
@@ -854,7 +855,7 @@ internal class Program
             Console.WriteLine("╔════════════════════════════════════════════╗");
             GenerateOption(new AstroOption()
             {
-                option = "Start / Stop Lethal Company.",
+                option = "Start / Stop Lethal Company",
                 identity = "4",
                 color = ConsoleColor.Magenta,
                 matchMenu = true,
@@ -862,7 +863,7 @@ internal class Program
             });
             GenerateOption(new AstroOption()
             {
-                option = "Open Lethal Company Folder.",
+                option = "Open Lethal Company Folder",
                 identity = "5",
                 color = ConsoleColor.Magenta,
                 matchMenu = true,
@@ -872,7 +873,7 @@ internal class Program
             Console.WriteLine("╔════════════════════════════════════════════╗");
             GenerateOption(new AstroOption()
             {
-                option = "Force Update Astro Boyz.",
+                option = "Force Update Astro Boyz",
                 identity = "6",
                 color = ConsoleColor.Magenta,
                 matchMenu = true,
@@ -880,7 +881,7 @@ internal class Program
             });
             GenerateOption(new AstroOption()
             {
-                option = "Remove Custom Path.",
+                option = "Remove Custom Path",
                 identity = "7",
                 color = ConsoleColor.Magenta,
                 matchMenu = true,
