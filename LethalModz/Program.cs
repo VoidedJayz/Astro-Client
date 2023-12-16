@@ -2,14 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.DirectoryServices.AccountManagement;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Mime;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
-
+using System.Windows.Forms;
 internal class Program
 {
     [DllImport("user32.dll")]
@@ -19,6 +22,7 @@ internal class Program
     private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
     [DllImport("kernel32.dll", ExactSpelling = true)]
     private static extern IntPtr GetConsoleWindow();
+    [STAThread]
     private static void Main(string[] args)
     {
         // Begin Application
@@ -26,16 +30,16 @@ internal class Program
         Console.CursorVisible = false;
         Console.SetWindowSize(100, 30);
         Utilities.lethalCompanyPath = Utilities.GetSteamPath() + "\\steamapps\\common\\Lethal Company";
-        Utilities.RefreshPath();
         Utilities.StopResizing();
         Utilities.CheckLethalCompany();
-        Utilities.CheckCustomPath();
         Utilities.ReloadUpdater();
+        Utilities.CheckCustomPath();
+        Utilities.RefreshPath();
 
         // Make Sure Path Exists
         if (Directory.Exists(Utilities.lethalCompanyPath))
         {
-            Utilities.SetColor(ConsoleColor.Yellow);
+            Utilities.SetColor(ConsoleColor.Cyan);
             try
             {
                 Console.Title = $"ASTRO BOYZ! | {Utilities.lethalCompanyPath.Split(new string[] { "Files " }, StringSplitOptions.None)[1]} |";
@@ -49,12 +53,12 @@ internal class Program
         {
             Utilities.SetColor(ConsoleColor.DarkRed);
             Console.Title = "ASTRO BOYZ! | Lethal Company Not Found";
-            Utilities.ConsoleAnimation("Error: Lethal Company Not Found. Please install Lethal Company from Steam.");
+            Utilities.ConsoleAnimation("Error: Lethal Company Not Found.");
             Utilities.ConsoleAnimation("If you believe this was a mistake, Contact VoidedJayz / Astro Boyz for Support.");
-            Utilities.ConsoleAnimation("Alternatively, you can try deleting the 'cpath.exe' file if present.");
-            Utilities.ConsoleAnimation("Alternatively (x2), you can enter the install path manually.");
+            Utilities.ConsoleAnimation("Alternatively, you can try deleting the 'cpath.txt' file if present.");
+            Utilities.ConsoleAnimation("Alternatively (x2), you can select the install path.");
             Utilities.GenerateOption("Exit", "1", ConsoleColor.DarkRed);
-            Utilities.GenerateOption("Enter Custom Path", "2", ConsoleColor.DarkRed);
+            Utilities.GenerateOption("Select Custom Path", "2", ConsoleColor.DarkRed);
             var currOption = Console.ReadLine();
             switch (currOption)
             {
@@ -62,16 +66,31 @@ internal class Program
                     Environment.Exit(0);
                     break;
                 case "2":
-                    Utilities.ConsoleAnimation("Please type the path to Lethal Company using this exact format, or there could be issues.");
-                    Utilities.SetColor(ConsoleColor.Green);
-                    Utilities.ConsoleAnimation("Example: C:\\Program Files (x86)\\Steam\\steamapps\\common\\Lethal Company");
-                    Utilities.SetColor(ConsoleColor.DarkRed);
-                    Utilities.ConsoleAnimation("Press 'Enter' when you are finished entering the path.");
-                    Utilities.lethalCompanyPath = Console.ReadLine();
-                    Utilities.RefreshPath();
-                    Utilities.SetColor(ConsoleColor.Yellow);
-                    Utilities.ConsoleAnimation($"Custom Path: {Utilities.lethalCompanyPath}");
-                    File.WriteAllText("cpath.txt", Utilities.lethalCompanyPath);
+                    string selectedFolder = Utilities.ShowFolderDialog();
+                    if (!string.IsNullOrEmpty(selectedFolder))
+                    {
+                        if (File.Exists($"{selectedFolder}\\Lethal Company.exe"))
+                        {
+                            Utilities.lethalCompanyPath = selectedFolder;
+                            Utilities.RefreshPath();
+                            Utilities.SetColor(ConsoleColor.Cyan);
+                            Utilities.ConsoleAnimation($"Custom Path: {Utilities.lethalCompanyPath}");
+                            File.WriteAllText("cpath.txt", Directory.GetCurrentDirectory());
+                        }
+                        else
+                        {
+                            Utilities.ConsoleAnimation("Error: Lethal Company.exe Not Found.");
+                            Utilities.ConsoleAnimation("Press any button to exit... :(");
+                            Console.ReadLine();
+                            Environment.Exit(0);
+                        }
+                    }
+                    else
+                    {
+                        Utilities.ConsoleAnimation("Operation Canceled, Press any button to exit... :(");
+                        Console.ReadLine();
+                        Environment.Exit(0);
+                    }
                     break;
                 default:
                     Utilities.ConsoleAnimation("Invalid Option.");
@@ -89,7 +108,7 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.2.9";
+        public static string currentVersion = "1.4.1";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
@@ -121,6 +140,48 @@ internal class Program
         }
 
         // Application Functions
+        public static void AstroMenu(bool state)
+        {
+            try
+            {
+                if (state == true)
+                {
+                    // Enable
+                    File.Move($"{bepInExPath}\\core\\AstroMenu.dll", $"{pluginsPath}\\AstroMenu.dll");
+                }
+                else
+                {
+                    // Remove
+                    File.Move($"{pluginsPath}\\AstroMenu.dll", $"{bepInExPath}\\core\\AstroMenu.dll");
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleAnimation($"Error: {ex.Message}");
+                Thread.Sleep(5000);
+            }
+        }
+        public static void BrutalCompany(bool state)
+        {
+            try
+            {
+                if (state == true)
+                {
+                    // Enable
+                    File.Move($"{bepInExPath}\\core\\BrutalCompanyPlus.dll", $"{pluginsPath}\\BrutalCompanyPlus.dll");
+                }
+                else
+                {
+                    // Remove
+                    File.Move($"{pluginsPath}\\BrutalCompanyPlus.dll", $"{bepInExPath}\\core\\BrutalCompanyPlus.dll");
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleAnimation($"Error: {ex.Message}");
+                Thread.Sleep(5000);
+            }   
+        }
         public static void AppHandler()
         {
             Console.Clear();
@@ -146,74 +207,64 @@ internal class Program
                         GetInstalledModNames();
                         ConsoleAnimation("Press any key to continue...");
                         Console.ReadLine();
-                        AppHandler();
                         break;
                     case "1":
-                        Console.ForegroundColor = ConsoleColor.Green;
+                        SetColor(ConsoleColor.Green);
                         ConsoleAnimation("Starting Mod Installer...");
                         InstallModz();
                         break;
                     case "2":
-                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        SetColor(ConsoleColor.DarkRed);
                         ConsoleAnimation("Starting Mod Remover...");
                         RemoveModz();
                         break;
                     case "3":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        ConsoleAnimation("Enabling Brutal Company...");
-                        BrutalCompany(true);
-                        Thread.Sleep(1000);
-                        Environment.Exit(0);
+                        ExtrasMenu();
                         break;
                     case "4":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        ConsoleAnimation("Disabling Brutal Company...");
-                        BrutalCompany(false);
+                        SetColor(ConsoleColor.Cyan);
+                        ConsoleAnimation("Would you like to Start or Stop Lethal Company?");
+                        GenerateOption("Start", "0", ConsoleColor.DarkGreen, false, false);
+                        GenerateOption("Stop", "1", ConsoleColor.DarkRed, false, false);
+                        var currOption2 = Console.ReadLine();
+                        switch (currOption2)
+                        {
+                            case "0":
+                                SetColor(ConsoleColor.Cyan);
+                                ConsoleAnimation("Starting...");
+                                LaunchSteamGame(1966720);
+                                Thread.Sleep(1000);
+                                Console.Clear();
+                                break;
+                            case "1":
+                                SetColor(ConsoleColor.Cyan);
+                                ConsoleAnimation("Closing...");
+                                CloseSteamGame(1966720);
+                                Thread.Sleep(1000);
+                                Console.Clear();
+                                break;
+                            default:
+                                SetColor(ConsoleColor.DarkRed);
+                                ConsoleAnimation("Invalid Option. Please try again.");
+                                break;
+                        }
                         Thread.Sleep(1000);
-                        Environment.Exit(0);
+                        Console.Clear();
                         break;
                     case "5":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        ConsoleAnimation("Opening...");
-                        Process.Start($"{lethalCompanyPath}\\Lethal Company.exe");
-                        Thread.Sleep(1000);
-                        Console.Clear();
-                        AppHandler();
-                        break;
-                    case "6":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        ConsoleAnimation("Closing...");
-                        try
-                        {
-                            foreach (var process in Process.GetProcessesByName("Lethal Company"))
-                            {
-                                process.Kill();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            ConsoleAnimation($"Error: {ex.Message}");
-                        }
-                        Thread.Sleep(1000);
-                        Console.Clear();
-                        AppHandler();
-                        break;
-                    case "7":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        SetColor(ConsoleColor.Cyan);
                         ConsoleAnimation("Opening...");
                         OpenLethalCompanyFolder();
                         Thread.Sleep(1000);
                         Console.Clear();
-                        AppHandler();
                         break;
-                    case "8":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        ConsoleAnimation("Updating...");
+                    case "6":
+                        SetColor(ConsoleColor.Cyan);
                         ForceAppUpdate();
                         Environment.Exit(0);
                         break;
-                    case "9":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
+                    case "7":
+                        SetColor(ConsoleColor.Cyan);
                         ConsoleAnimation("Removing...");
                         if (File.Exists("cpath.txt"))
                         {
@@ -228,60 +279,24 @@ internal class Program
                         }
                         Thread.Sleep(1000);
                         Console.Clear();
-                        AppHandler();
                         break;
-                    /*case "9":
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Environment.Exit(0);
-                        break;*/
                     default:
                         Console.ForegroundColor = ConsoleColor.DarkRed;
                         ConsoleAnimation("Invalid Option. Please try again.");
-                        AppHandler();
                         break;
                 }
             }
+            AppHandler();
         }
         public static void InstallModz()
         {
-            // Check For Currently Installed Modz
-            if (Directory.Exists(bepInExPath))
+            if (CheckForExistingMods() == true)
             {
                 SetColor(ConsoleColor.DarkRed);
-                ConsoleAnimation("Found Existing BepInEx folder! Removing...");
-                SetColor(ConsoleColor.Yellow);
-                try
-                {
-                    Directory.Delete(bepInExPath, true);
-                }
-                catch (Exception ex)
-                {
-                    SetColor(ConsoleColor.DarkRed);
-                    ConsoleAnimation($"Error: {ex.Message}");
-                }
-                try
-                {
-                    File.Delete($"{lethalCompanyPath}\\doorstop_config.ini");
-                }
-                catch (Exception ex)
-                {
-                    SetColor(ConsoleColor.DarkRed);
-                    ConsoleAnimation($"Error: {ex.Message}");
-                }
-                try
-                {
-                    File.Delete($"{lethalCompanyPath}\\winhttp.dll");
-                }
-                catch (Exception ex)
-                {
-                    SetColor(ConsoleColor.DarkRed);
-                    ConsoleAnimation($"Error: {ex.Message}");
-                }
-            }
-            else
-            {
-                ConsoleAnimation("No mods currently installed.");
-                ConsoleAnimation("Proceeding.");
+                ConsoleAnimation("Existing Mods Found. Please remove them before installing new mods.");
+                ConsoleAnimation("Press any key to continue...");
+                Console.ReadLine();
+                AppHandler();
             }
             using (var client = server)
             {
@@ -309,28 +324,39 @@ internal class Program
                 ConsoleAnimation("Zip Download Complete!");
                 ConsoleAnimation("Opening Zip...");
                 SetColor(ConsoleColor.Magenta);
-                using (ZipArchive archive = ZipFile.OpenRead($"{lethalCompanyPath}\\temp_astro.zip"))
+                try
                 {
-                    using (var progress = new ProgressBar())
+                    using (ZipArchive archive = ZipFile.OpenRead($"{lethalCompanyPath}\\temp_astro.zip"))
                     {
-                        for (int i = 0; i <= archive.Entries.Count; i++)
+                        using (var progress = new ProgressBar())
                         {
-                            progress.Report((double)i / archive.Entries.Count);
-                            Console.Title = $"ASTRO BOYZ! | Installing Modz... | {i}/{archive.Entries.Count}";
-                            Thread.Sleep(5);
+                            for (int i = 0; i <= archive.Entries.Count; i++)
+                            {
+                                progress.Report((double)i / archive.Entries.Count);
+                                Console.Title = $"ASTRO BOYZ! | Installing Modz... | {i}/{archive.Entries.Count}";
+                                Thread.Sleep(1);
+                            }
                         }
-                    }
 
+                    }
+                    Console.Write($"                                                                    ");
+                    Console.SetCursorPosition(0, Console.CursorTop);
+                    SetColor(ConsoleColor.Cyan);
+                    ConsoleAnimation("Extracting Files...");
+                    ZipFile.ExtractToDirectory($"{lethalCompanyPath}\\temp_astro.zip", $"{lethalCompanyPath}");
+                    SetColor(ConsoleColor.Green);
+                    ConsoleAnimation("Finished!");
+                    File.Delete($"{lethalCompanyPath}\\temp_astro.zip");
+                    Thread.Sleep(2500);
                 }
-                Console.Write($"                                                                    \n");
-                Console.SetCursorPosition(0, Console.CursorTop);
-                SetColor(ConsoleColor.Yellow);
-                ConsoleAnimation("Extracting Files...");
-                ZipFile.ExtractToDirectory($"{lethalCompanyPath}\\temp_astro.zip", $"{lethalCompanyPath}");
-                SetColor(ConsoleColor.Green);
-                ConsoleAnimation("Finished!");
-                File.Delete($"{lethalCompanyPath}\\temp_astro.zip");
-                Thread.Sleep(2500);
+                catch (Exception ex)
+                {
+                    SetColor(ConsoleColor.DarkRed);
+                    ConsoleAnimation($"Error Extracting Files: {ex.Message}");
+                    ConsoleAnimation("Perhaps the file was corrupted?");
+                    ConsoleAnimation("Press any key to continue...");
+                    Console.ReadLine();
+                }
             }
             Console.Clear();
             AppHandler();
@@ -338,124 +364,55 @@ internal class Program
         public static void RemoveModz()
         {
             // Check For Currently Installed Modz
-            if (Directory.Exists(bepInExPath))
+            if (CheckForExistingMods() == true)
             {
-                SetColor(ConsoleColor.Yellow);
-                ConsoleAnimation("Found BepInEx folder!");
-
-                // Just to make things look cooler
-                foreach (var folders in Directory.GetDirectories(bepInExPath))
+                SetColor(ConsoleColor.Cyan);
+                try
                 {
-                    foreach (var files in Directory.GetFiles(folders))
-                    {
-                        Thread.Sleep(15);
-                        SetColor(ConsoleColor.White);
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"                                                                    ");
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Removed: {files.Split(new string[] { "Lethal Company" }, StringSplitOptions.None)[1]}");
-                        File.Delete(files);
-                    }
-                    Directory.Delete(folders, true);
+                    Directory.Delete(bepInExPath, true);
                 }
-                Console.Write($"                                                                    \n");
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Directory.Delete(bepInExPath, true);
-                File.Delete(lethalCompanyPath + "\\doorstop_config.ini");
-                File.Delete(lethalCompanyPath + "\\winhttp.dll");
+                catch (Exception ex)
+                {
+                    ConsoleAnimation($"Error Deleting BepInEx Folder: {ex.InnerException}");
+                }
+                try
+                {
+                    Directory.Delete(lethalCompanyPath + "\\MLLoader", true);
+                }
+                catch (Exception ex)
+                {
+                    ConsoleAnimation($"Error Deleting MLLoader Folder: {ex.InnerException}");
+                }
+                try
+                {
+                    File.Delete($"{lethalCompanyPath}\\doorstop_config.ini");
+                }
+                catch (Exception ex)
+                {
+                    ConsoleAnimation($"Error Deleting doorstop_config.ini: {ex.InnerException}");
+                }
+                try
+                {
+                    File.Delete($"{lethalCompanyPath}\\winhttp.dll");
+                }
+                catch (Exception ex)
+                {
+                    ConsoleAnimation($"Error Deleting winhttp.dll: {ex.InnerException}");
+                }
                 SetColor(ConsoleColor.Green); ;
                 ConsoleAnimation("All mod files removed!");
                 Thread.Sleep(2500);
             }
             else
             {
-                ConsoleAnimation("Error: BepInEx folder not found, no mods installed.");
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation("No mods installed.");
                 ConsoleAnimation("Press any key to continue...");
                 Console.ReadLine();
                 AppHandler();
             }
             Console.Clear();
             AppHandler();
-        }
-        public static void BrutalCompany(bool state)
-        {
-            // Rahhh more spaghetti code
-            if (!Directory.Exists($"{bepInExPath}\\!! Brutal Company"))
-            {
-                SetColor(ConsoleColor.DarkRed);
-                ConsoleAnimation("Error: Brutal Company not found. Please contact VoidedJayz / Astro Boyz.");
-                Thread.Sleep(1500);
-                AppHandler();
-                return;
-            }
-            if (state == true)
-            {
-                try
-                {
-                    Console.Clear();
-                    SetColor(ConsoleColor.DarkRed);
-                    ConsoleAnimation("WARNING: You should only be enabling Brutal Company if you plan to be host.");
-                    SetColor(ConsoleColor.White);
-                    ConsoleAnimation("If you are not host, please keep this disabled or it will cause issues.");
-                    ConsoleAnimation("Are you sure you want to enable this?\n");
-                    GenerateOption("Yes", "1", ConsoleColor.Magenta);
-                    GenerateOption("No\n\n", "2", ConsoleColor.Magenta);
-                    GenerateOption("Option : ", "?", ConsoleColor.Magenta, false);
-                    var currOption = Console.ReadLine();
-                    switch (currOption)
-                    {
-                        case "1":
-                            SetColor(ConsoleColor.Green);
-                            File.Move($"{bepInExPath}\\!! Brutal Company\\BrutalCompany.dll", $"{pluginsPath}\\BrutalCompany.dll");
-                            ConsoleAnimation("Brutal Company Enabled!");
-                            Thread.Sleep(750);
-                            Console.Clear();
-                            AppHandler();
-                            break;
-                        case "2":
-                            SetColor(ConsoleColor.DarkRed);
-                            ConsoleAnimation("Brutal Company Disabled!");
-                            File.Move($"{pluginsPath}\\BrutalCompany.dll", $"{bepInExPath}\\!! Brutal Company\\BrutalCompany.dll");
-                            Thread.Sleep(750);
-                            Console.Clear();
-                            AppHandler();
-                            break;
-                        default:
-                            SetColor(ConsoleColor.DarkRed);
-                            ConsoleAnimation("Invalid Option. Brutal Company Disabled!");
-                            File.Move($"{pluginsPath}\\BrutalCompany.dll", $"{bepInExPath}\\!! Brutal Company\\BrutalCompany.dll");
-                            Thread.Sleep(750);
-                            Console.Clear();
-                            AppHandler();
-                            break;
-                    }
-                }
-                catch
-                {
-                    SetColor(ConsoleColor.DarkRed);
-                    ConsoleAnimation("Brutal Company Is Already Enabled!");
-                }
-                Thread.Sleep(1500);
-                Console.Clear();
-                AppHandler();
-            }
-            else
-            {
-                try
-                {
-                    File.Move($"{pluginsPath}\\BrutalCompany.dll", $"{bepInExPath}\\!! Brutal Company\\BrutalCompany.dll");
-                    SetColor(ConsoleColor.Green);
-                    ConsoleAnimation("Brutal Company Disabled!");
-                }
-                catch
-                {
-                    SetColor(ConsoleColor.DarkRed);
-                    ConsoleAnimation("Brutal Company Is Already Disabled!");
-                }
-                Thread.Sleep(1500);
-                Console.Clear();
-                AppHandler();
-            }
         }
         public static void ReloadUpdater()
         {
@@ -500,6 +457,29 @@ internal class Program
         }
 
         // Utility Functions
+        public static string GetSteamPath()
+        {
+            // Messy way of doing things, but it gets the job done
+            string steamPath = null;
+            string steamRegKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Valve\\Steam";
+            string steamRegKey64 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Valve\\Steam";
+            string steamId = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\ActiveProcess";
+            string steamRegValue = "InstallPath";
+
+            if (Environment.Is64BitOperatingSystem)
+            {
+                var regFound = Registry.GetValue(steamRegKey64, steamRegValue, null);
+                steamPath = regFound.ToString();
+            }
+            else
+            {
+                var regFound = Registry.GetValue(steamRegKey, steamRegValue, null);
+                steamPath = regFound.ToString();
+            }
+            var idFound = Registry.GetValue(steamId, "ActiveUser", null);
+            currentSteamId = idFound.ToString();
+            return steamPath;
+        }
         public static void GetInstalledModNames()
         {
             Console.Clear();
@@ -524,29 +504,6 @@ internal class Program
         {
             Process.Start("LethalUpdater.exe");
             Environment.Exit(0);
-        }
-        public static string GetSteamPath()
-        {
-            // Messy way of doing things, but it gets the job done
-            string steamPath = null;
-            string steamRegKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Valve\\Steam";
-            string steamRegKey64 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Valve\\Steam";
-            string steamId = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\ActiveProcess";
-            string steamRegValue = "InstallPath";
-
-            if (Environment.Is64BitOperatingSystem)
-            {
-                var regFound = Registry.GetValue(steamRegKey64, steamRegValue, null);
-                steamPath = regFound.ToString();
-            }
-            else
-            {
-                var regFound = Registry.GetValue(steamRegKey, steamRegValue, null);
-                steamPath = regFound.ToString();
-            }
-            var idFound = Registry.GetValue(steamId, "ActiveUser", null);
-            currentSteamId = idFound.ToString();
-            return steamPath;
         }
         public static void CheckCustomPath()
         {
@@ -579,12 +536,102 @@ internal class Program
                 CheckLethalCompany();
             }
         }
+        public static bool CheckForExistingMods()
+        {
+            if (Directory.Exists(bepInExPath) || Directory.Exists(lethalCompanyPath + "\\MLLoader") || File.Exists($"{lethalCompanyPath}\\winhttp.dll") || File.Exists($"{lethalCompanyPath}\\doorstop_config.ini"))
+            {
+                return true;
+            }
+            return false;
+        }
         public static void OpenLethalCompanyFolder()
         {
             Process.Start(lethalCompanyPath);
         }
+        public static void LaunchSteamGame(int game)
+        {
+            try
+            {
+                Process.Start("steam://rungameid/" + game);
+            }
+            catch (Exception ex)
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation($"Error Starting Steam game: {ex.Message}");
+            }
+        }
+        public static void CloseSteamGame(int appId)
+        {
+            string steamUrl = $"steam://nav/games/details/{appId}";
+
+            try
+            {
+                // Open the Steam game's details page
+                Process.Start(steamUrl);
+
+                // Wait for a moment to ensure the Steam client has enough time to open the game's details
+                System.Threading.Thread.Sleep(1000);
+
+                // Find the process associated with the game by its name
+                Process[] processes = Process.GetProcessesByName("Lethal Company");
+                foreach (Process process in processes)
+                {
+                    // Close the process
+                    process.CloseMainWindow();
+                    process.WaitForExit();
+
+                    // I could use Process.Kill but then data would not save properly.
+                }
+            }
+            catch (Exception ex)
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation($"Error closing Steam game: {ex.Message}");
+            }
+        }
+        public static string ShowFolderDialog()
+        {
+            string selectedFolder = null;
+
+            using (var dialog = new FolderBrowserDialog())
+            {
+                // Set the initial directory (optional)
+                dialog.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+
+                // Show the FolderBrowserDialog
+                DialogResult result = dialog.ShowDialog();
+
+                // Check if the user clicked OK
+                if (result == DialogResult.OK)
+                {
+                    // Get the selected folder
+                    selectedFolder = dialog.SelectedPath;
+                }
+            }
+
+            return selectedFolder;
+        }
+        public static string GetFullUserName()
+        {
+            WindowsIdentity windowsIdentity = WindowsIdentity.GetCurrent();
+
+            if (windowsIdentity != null)
+            {
+                return windowsIdentity.Name;
+            }
+
+            return null;
+        }
 
         // Misc Functions
+        public static string GenerateSecureDownload(string url, int expires)
+        {
+            url = "https://api.astroswrld.club/api/v1/request-token?url=" + url + "&expires=" + expires + "&pureRes=true";
+
+            var response = server.DownloadString(url);
+            var resp = response.Split('"');
+            return resp[1];
+        }
         public static void StopResizing()
         {
             // Thanks CoPilot for Generating This
@@ -598,14 +645,6 @@ internal class Program
                 DeleteMenu(sysMenu, SC_SIZE, MF_BYCOMMAND);
             }
         }
-        public static string GenerateSecureDownload(string url, int expires)
-        {
-            url = "https://api.astroswrld.club/api/v1/request-token?url=" + url + "&expires=" + expires + "&pureRes=true";
-
-            var response = server.DownloadString(url);
-            var resp = response.Split('"');
-            return resp[1];
-        }
         public static void GenerateMenu()
         {
             SetColor(ConsoleColor.DarkMagenta);
@@ -617,33 +656,115 @@ internal class Program
             CenterText(" #+#     #+#   #+#    #+#      #+#       #+#    #+#     #+#    #+#     \r");
             CenterText("###     ###    ########       ###       ###    ###      ########       \n");
             SetColor(ConsoleColor.DarkBlue);
-            ConsoleAnimation($"Welcome, {Environment.UserName}! (STEAM: {currentSteamId})");
+            ConsoleAnimation($"Welcome, {GetFullUserName()}! (STEAM: {currentSteamId})");
             ConsoleAnimation("Please select an option below.");
             SetColor(ConsoleColor.Magenta);
             Console.WriteLine();
-            Console.WriteLine(">-----------------------------------<");
+            Console.WriteLine("╔════════════════════════════════════════════╗");
             GenerateOption("List Mods", "0", ConsoleColor.Magenta);
             GenerateOption("Install Modz.", "1", ConsoleColor.Magenta);
             GenerateOption("Remove Modz.", "2", ConsoleColor.Magenta);
-            GenerateOption("Enable/Disable Brutal Company.", "3/4", ConsoleColor.Magenta, false);
-            SetColor(ConsoleColor.DarkRed);
-            Console.Write(" (BROKEN)\n");
+            GenerateOption("Select Extra Mods", "3", ConsoleColor.Magenta);
             SetColor(ConsoleColor.Magenta);
-            Console.WriteLine(">-----------------------------------<");
-            GenerateOption("Start/Stop Lethal Company.", "5/6", ConsoleColor.Magenta);
-            GenerateOption("Open Lethal Company Folder.", "7", ConsoleColor.Magenta);
-            Console.WriteLine(">-----------------------------------<");
-            GenerateOption("(FORCE) Update ASTRO BOYZ.", "8", ConsoleColor.Magenta);
-            GenerateOption("Remove Custom Path.", "9", ConsoleColor.Magenta);
-            Console.WriteLine(">-----------------------------------<\n\n");
-            GenerateOption("Option : ", "?", ConsoleColor.Magenta, false);
+            Console.WriteLine("╚════════════════════════════════════════════╝");
+            Console.WriteLine("╔════════════════════════════════════════════╗");
+            GenerateOption("Start/Stop Lethal Company.", "4", ConsoleColor.Magenta);
+            GenerateOption("Open Lethal Company Folder.", "5", ConsoleColor.Magenta);
+            Console.WriteLine("╚════════════════════════════════════════════╝");
+            Console.WriteLine("╔════════════════════════════════════════════╗");
+            GenerateOption("(FORCE) Update ASTRO BOYZ.", "6", ConsoleColor.Magenta);
+            GenerateOption("Remove Custom Path.", "7", ConsoleColor.Magenta);
+            Console.WriteLine("╚════════════════════════════════════════════╝\n\n");
+            GenerateOption("Option : ", "?", ConsoleColor.Magenta, false, false);
         }
-        public static void GenerateOption(string Option, string identity, ConsoleColor color, bool newLine = true)
+        public static void ExtrasMenu()
+        {
+            Console.Clear();
+            SetColor(ConsoleColor.DarkMagenta);
+            CenterText("          :::        ::::::::   :::::::::::   :::::::::       :::::::: \r");
+            CenterText("       :+: :+:     :+:    :+:      :+:       :+:    :+:     :+:    :+: \r");
+            CenterText("     +:+   +:+    +:+             +:+       +:+    +:+     +:+    +:+  \r");
+            CenterText("   +#++:++#++:   +#++:++#++      +#+       +#++:++#:      +#+    +:+   \r");
+            CenterText("  +#+     +#+          +#+      +#+       +#+    +#+     +#+    +#+    \r");
+            CenterText(" #+#     #+#   #+#    #+#      #+#       #+#    #+#     #+#    #+#     \r");
+            CenterText("###     ###    ########       ###       ###    ###      ########       \n");
+            SetColor(ConsoleColor.Magenta);
+            Console.WriteLine();
+            Console.WriteLine("╔════════════════════════════════════════════╗");
+            GenerateOption("Astro Menu", "0", ConsoleColor.Magenta);
+            GenerateOption("Brutal Company", "1", ConsoleColor.Magenta, true, false);
+            SetColor(ConsoleColor.DarkRed);
+            Console.Write(" (HOST ONLY)\n");
+            SetColor(ConsoleColor.Magenta);
+            Console.WriteLine("╚════════════════════════════════════════════╝\n\n");
+            GenerateOption("Option : ", "?", ConsoleColor.Magenta, false, false);
+            var currOption = Console.ReadLine();
+            switch (currOption)
+            {
+                case "0":
+                    ConsoleAnimation("Would you like to enable or disable Astro Menu?");
+                    GenerateOption("Enable", "0", ConsoleColor.DarkGreen, false, false);
+                    GenerateOption("Disable", "1", ConsoleColor.DarkRed, false, false);
+                    var currOption2 = Console.ReadLine();
+                    switch (currOption2)
+                    {
+                        case "0":
+                            AstroMenu(true);
+                            ConsoleAnimation("Astro Menu Enabled!");
+                            break;
+                        case "1":
+                            AstroMenu(false);
+                            ConsoleAnimation("Astro Menu Disabled!");
+                            break;
+                        default:
+                            SetColor(ConsoleColor.DarkRed);
+                            ConsoleAnimation("Invalid Option.");
+                            break;
+                    }
+                    Thread.Sleep(2000);
+                    break;
+                case "1":
+                    ConsoleAnimation("Would you like to enable or disable Brutal Company?");
+                    GenerateOption("Enable", "0", ConsoleColor.DarkGreen, false, false);
+                    GenerateOption("Disable", "1", ConsoleColor.DarkRed, false, false);
+                    var currOption3 = Console.ReadLine();
+                    switch (currOption3)
+                    {
+                        case "0":
+                            BrutalCompany(true);
+                            ConsoleAnimation("Brutal Company Enabled!");
+                            break;
+                        case "1":
+                            BrutalCompany(false);
+                            ConsoleAnimation("Brutal Company Disabled!");
+                            break;
+                        default:
+                            SetColor(ConsoleColor.DarkRed);
+                            ConsoleAnimation("Invalid Option.");
+                            break;
+                    }
+                    Thread.Sleep(2000);
+                    break;
+                default:
+                    SetColor(ConsoleColor.DarkRed);
+                    ConsoleAnimation("Invalid Option.");
+                    Thread.Sleep(2000);
+                    break;
+            }
+        }
+        public static void GenerateOption(string Option, string identity, ConsoleColor color, bool matchMenu = true, bool newLine = true)
         {
             // Probably much better ways to do this, but this works ig
             var originalConsoleColor = Console.ForegroundColor;
             SetColor(color);
-            Console.Write(" [ ");
+            if (matchMenu == true)
+            {
+                Console.Write("║[ ");
+            }
+            else
+            {
+                Console.Write(" [ ");
+            }   
             SetColor(ConsoleColor.Gray);
             Console.Write(identity);
             SetColor(color);
@@ -651,9 +772,30 @@ internal class Program
             SetColor(ConsoleColor.Gray);
             if (newLine == true)
             {
+                if (matchMenu == true)
+                {
+                    var old = Console.CursorLeft;
+                    Console.SetCursorPosition(45, Console.CursorTop);
+                    SetColor(color);
+                    Console.Write("║");
+                    SetColor(ConsoleColor.Gray);
+                    Console.SetCursorPosition(old, Console.CursorTop);
+                }
                 Console.Write(Option + "\n");
             }
-            else { Console.Write(Option);}
+            else 
+            {
+                if (matchMenu == true)
+                {
+                    var old = Console.CursorLeft;
+                    Console.SetCursorPosition(45, Console.CursorTop);
+                    SetColor(color);
+                    Console.Write("║");
+                    SetColor(ConsoleColor.Gray);
+                    Console.SetCursorPosition(old, Console.CursorTop);
+                }
+                Console.Write(Option); 
+            }
             SetColor(originalConsoleColor);
         }
     }
@@ -674,7 +816,7 @@ internal class Program
         private readonly TimeSpan animationInterval = TimeSpan.FromSeconds(1.0 / 8);
         private const string animation = @"|/-\";
 
-        private readonly Timer timer;
+        private readonly System.Threading.Timer timer;
 
         private double currentProgress = 0;
         private string currentText = string.Empty;
@@ -683,7 +825,7 @@ internal class Program
 
         public ProgressBar()
         {
-            timer = new Timer(TimerHandler);
+            timer = new System.Threading.Timer(TimerHandler);
             if (!Console.IsOutputRedirected)
             {
                 ResetTimer();

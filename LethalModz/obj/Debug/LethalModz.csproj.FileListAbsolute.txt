@@ -12,3 +12,10 @@ C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\De
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Debug\LethalModz.csproj.CoreCompileInputs.cache
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Debug\LethalModz.exe
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\LethalModz\LethalModz\obj\Debug\LethalModz.pdb
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\bin\Debug\LethalModz.exe.config
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\bin\Debug\LethalModz.exe
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\bin\Debug\LethalModz.pdb
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Debug\LethalModz.csproj.AssemblyReference.cache
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Debug\LethalModz.csproj.CoreCompileInputs.cache
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Debug\LethalModz.exe
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Debug\LethalModz.pdb
