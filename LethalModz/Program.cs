@@ -55,10 +55,24 @@ internal class Program
             Console.Title = "ASTRO BOYZ! | Lethal Company Not Found";
             Utilities.ConsoleAnimation("Error: Lethal Company Not Found.");
             Utilities.ConsoleAnimation("If you believe this was a mistake, Contact VoidedJayz / Astro Boyz for Support.");
-            Utilities.ConsoleAnimation("Alternatively, you can try deleting the 'cpath.txt' file if present.");
-            Utilities.ConsoleAnimation("Alternatively (x2), you can select the install path.");
-            Utilities.GenerateOption("Exit", "1", ConsoleColor.DarkRed);
-            Utilities.GenerateOption("Select Custom Path", "2", ConsoleColor.DarkRed);
+            Utilities.ConsoleAnimation("If you recently modified the Lethal Company Location, delete 'cpath.txt'.");
+            Utilities.ConsoleAnimation("Alternatively, you can select the install path for Lethal Company.");
+            Utilities.GenerateOption(new AstroOption()
+            {
+                option = "Exit.",
+                identity = "1",
+                color = ConsoleColor.DarkRed,
+                matchMenu = true,
+                newLine = true
+            });
+            Utilities.GenerateOption(new AstroOption()
+            {
+                option = "Select Install Path.",
+                identity = "2",
+                color = ConsoleColor.DarkRed,
+                matchMenu = true,
+                newLine = true
+            });
             var currOption = Console.ReadLine();
             switch (currOption)
             {
@@ -108,12 +122,13 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "1.4.1";
+        public static string currentVersion = "2.0.0";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
         public static string pluginsPath = $"{bepInExPath}\\plugins";
         public static string modzUrl = "https://cdn.astroswrld.club/secure/Files/modpack.zip";
+        public static string reshadeUrl = "https://cdn.astroswrld.club/secure/Files/reshade.zip";
         public static WebClient server = new WebClient();
 
         // Console Functions
@@ -158,7 +173,7 @@ internal class Program
             catch (Exception ex)
             {
                 ConsoleAnimation($"Error: {ex.Message}");
-                Thread.Sleep(5000);
+                Thread.Sleep(2000);
             }
         }
         public static void BrutalCompany(bool state)
@@ -179,8 +194,127 @@ internal class Program
             catch (Exception ex)
             {
                 ConsoleAnimation($"Error: {ex.Message}");
-                Thread.Sleep(5000);
+                Thread.Sleep(2000);
             }   
+        }
+        public static void RichPresence(bool state)
+        {
+            try
+            {
+                if (state == true)
+                {
+                    // Enable
+                    File.Move($"{bepInExPath}\\core\\LethalCompanyPresence.dll", $"{lethalCompanyPath}\\MLLoader\\Mods\\LethalCompanyPresence.dll");
+                }
+                else
+                {
+                    // Remove
+                    File.Move($"{lethalCompanyPath}\\MLLoader\\Mods\\LethalCompanyPresence.dll", $"{bepInExPath}\\core\\LethalCompanyPresence.dll");
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleAnimation($"Error: {ex.Message}");
+                Thread.Sleep(2000);
+            }
+        }
+        public static void RetroShading(bool state)
+        {
+            if (state == true)
+            {
+                if (CheckForExistingShaders() == true)
+                {
+                    SetColor(ConsoleColor.DarkRed);
+                    ConsoleAnimation("Existing Shaders Found. Please remove them before installing new shaders.");
+                    ConsoleAnimation("Press any key to continue...");
+                    Console.ReadLine();
+                    AppHandler();
+                    return;
+                }
+                using (var client = server)
+                {
+                    SetColor(ConsoleColor.Magenta);
+                    ConsoleAnimation("Downloading Zip...");
+                    try
+                    {
+                        client.DownloadProgressChanged += (s, e) =>
+                        {
+                            Console.Title = $"ASTRO BOYZ! | Downloading... | {e.ProgressPercentage}% ({e.BytesReceived}/{e.TotalBytesToReceive})";
+                        };
+                        client.DownloadFileAsync(new Uri(GenerateSecureDownload(reshadeUrl, 30)), $"{lethalCompanyPath}\\temp_astro.zip");
+                    }
+                    catch (Exception ex)
+                    {
+                        ConsoleAnimation($"Error Downloading Mods: {ex.Message}");
+                        Thread.Sleep(2500);
+                        return;
+                    }
+                    while (client.IsBusy)
+                    {
+                        Thread.Sleep(500);
+                    }
+                    ConsoleAnimation("Zip Download Complete!");
+                    ConsoleAnimation("Opening Zip...");
+                    SetColor(ConsoleColor.Magenta);
+                    try
+                    {
+                        using (ZipArchive archive = ZipFile.OpenRead($"{lethalCompanyPath}\\temp_astro.zip"))
+                        {
+                            using (var progress = new ProgressBar())
+                            {
+                                for (int i = 0; i <= archive.Entries.Count; i++)
+                                {
+                                    progress.Report((double)i / archive.Entries.Count);
+                                    Console.Title = $"ASTRO BOYZ! | Installing Reshade... | {i}/{archive.Entries.Count}";
+                                    Thread.Sleep(1);
+                                }
+                            }
+
+                        }
+                        Console.Write($"                                                                    ");
+                        Console.SetCursorPosition(0, Console.CursorTop);
+                        SetColor(ConsoleColor.Cyan);
+                        ConsoleAnimation("Extracting Files...");
+                        ZipFile.ExtractToDirectory($"{lethalCompanyPath}\\temp_astro.zip", $"{lethalCompanyPath}");
+                        SetColor(ConsoleColor.Green);
+                        ConsoleAnimation("Finished!");
+                        File.Delete($"{lethalCompanyPath}\\temp_astro.zip");
+                        Thread.Sleep(2500);
+                    }
+                    catch (Exception ex)
+                    {
+                        SetColor(ConsoleColor.DarkRed);
+                        ConsoleAnimation($"Error Extracting Files: {ex.Message}");
+                        ConsoleAnimation("Perhaps the file was corrupted?");
+                        ConsoleAnimation("Press any key to continue...");
+                        Console.ReadLine();
+                    }
+                }
+            }
+            else
+            {
+                if (CheckForExistingShaders() == false)
+                {
+                    SetColor(ConsoleColor.DarkRed);
+                    ConsoleAnimation("No shaders found.");
+                    ConsoleAnimation("Press any key to continue...");
+                    Console.ReadLine();
+                    AppHandler();
+                    return;
+                }
+                else
+                {
+                    Directory.Delete(lethalCompanyPath + "\\reshade-shaders", true);
+                    File.Delete(lethalCompanyPath + "\\dxgi.dll");
+                    File.Delete(lethalCompanyPath + "\\ReShade.ini");
+                    File.Delete(lethalCompanyPath + "\\ReShade.log");
+                    File.Delete(lethalCompanyPath + "\\ReShadePreset.ini");
+                    SetColor(ConsoleColor.Green);
+                    ConsoleAnimation("Shaders Removed!");
+                    Thread.Sleep(2500);
+                    AppHandler();
+                }
+            }
         }
         public static void AppHandler()
         {
@@ -224,8 +358,22 @@ internal class Program
                     case "4":
                         SetColor(ConsoleColor.Cyan);
                         ConsoleAnimation("Would you like to Start or Stop Lethal Company?");
-                        GenerateOption("Start", "0", ConsoleColor.DarkGreen, false, false);
-                        GenerateOption("Stop", "1", ConsoleColor.DarkRed, false, false);
+                        GenerateOption(new AstroOption()
+                        {
+                            option = "Start",
+                            identity = "0",
+                            color = ConsoleColor.DarkGreen,
+                            matchMenu = false,
+                            newLine = true
+                        });
+                        GenerateOption(new AstroOption()
+                        {
+                            option = "Stop",
+                            identity = "1",
+                            color = ConsoleColor.DarkRed,
+                            matchMenu = false,
+                            newLine = true
+                        });
                         var currOption2 = Console.ReadLine();
                         switch (currOption2)
                         {
@@ -544,6 +692,14 @@ internal class Program
             }
             return false;
         }
+        public static bool CheckForExistingShaders()
+        {
+            if (Directory.Exists(lethalCompanyPath + "\\reshade-shaders") || File.Exists(lethalCompanyPath + "\\dxgi.dll") || File.Exists(lethalCompanyPath + "\\ReShade.ini") || File.Exists(lethalCompanyPath + "\\ReShade.log") || File.Exists(lethalCompanyPath + "\\ReShadePreset.ini"))
+            {
+                return true;
+            }
+            return false;
+        }
         public static void OpenLethalCompanyFolder()
         {
             Process.Start(lethalCompanyPath);
@@ -656,26 +812,89 @@ internal class Program
             CenterText(" #+#     #+#   #+#    #+#      #+#       #+#    #+#     #+#    #+#     \r");
             CenterText("###     ###    ########       ###       ###    ###      ########       \n");
             SetColor(ConsoleColor.DarkBlue);
-            ConsoleAnimation($"Welcome, {GetFullUserName()}! (STEAM: {currentSteamId})");
-            ConsoleAnimation("Please select an option below.");
+            ConsoleAnimation($"Welcome, {Environment.UserName}! (STEAM: {currentSteamId})");
+            ConsoleAnimation("Please type a numbered option below, then press enter.");
             SetColor(ConsoleColor.Magenta);
             Console.WriteLine();
             Console.WriteLine("╔════════════════════════════════════════════╗");
-            GenerateOption("List Mods", "0", ConsoleColor.Magenta);
-            GenerateOption("Install Modz.", "1", ConsoleColor.Magenta);
-            GenerateOption("Remove Modz.", "2", ConsoleColor.Magenta);
-            GenerateOption("Select Extra Mods", "3", ConsoleColor.Magenta);
+            GenerateOption(new AstroOption()
+            {
+                option = "View Installed Mods",
+                identity = "0",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true,
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Install Mods.",
+                identity = "1",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Remove Mods.",
+                identity = "2",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Extra Mods",
+                identity = "3",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
             SetColor(ConsoleColor.Magenta);
             Console.WriteLine("╚════════════════════════════════════════════╝");
             Console.WriteLine("╔════════════════════════════════════════════╗");
-            GenerateOption("Start/Stop Lethal Company.", "4", ConsoleColor.Magenta);
-            GenerateOption("Open Lethal Company Folder.", "5", ConsoleColor.Magenta);
+            GenerateOption(new AstroOption()
+            {
+                option = "Start / Stop Lethal Company.",
+                identity = "4",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Open Lethal Company Folder.",
+                identity = "5",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
             Console.WriteLine("╚════════════════════════════════════════════╝");
             Console.WriteLine("╔════════════════════════════════════════════╗");
-            GenerateOption("(FORCE) Update ASTRO BOYZ.", "6", ConsoleColor.Magenta);
-            GenerateOption("Remove Custom Path.", "7", ConsoleColor.Magenta);
+            GenerateOption(new AstroOption()
+            {
+                option = "Force Update Astro Boyz.",
+                identity = "6",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Remove Custom Path.",
+                identity = "7",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
             Console.WriteLine("╚════════════════════════════════════════════╝\n\n");
-            GenerateOption("Option : ", "?", ConsoleColor.Magenta, false, false);
+            GenerateOption(new AstroOption()
+            {
+                option = "Option : ",
+                identity = "?",
+                color = ConsoleColor.Magenta,
+                matchMenu = false,
+                newLine = false
+            });
         }
         public static void ExtrasMenu()
         {
@@ -691,26 +910,64 @@ internal class Program
             SetColor(ConsoleColor.Magenta);
             Console.WriteLine();
             Console.WriteLine("╔════════════════════════════════════════════╗");
-            GenerateOption("Astro Menu", "0", ConsoleColor.Magenta);
-            GenerateOption("Brutal Company", "1", ConsoleColor.Magenta, true, false);
-            SetColor(ConsoleColor.DarkRed);
-            Console.Write(" (HOST ONLY)\n");
-            SetColor(ConsoleColor.Magenta);
+            GenerateOption(new AstroOption() 
+            { 
+                option = "Astro Menu", 
+                identity = "0", 
+                color = ConsoleColor.Magenta, 
+                matchMenu = true, 
+                newLine = true,
+                warning = " (CONSIDERED CHEATS)",
+                warningColor = ConsoleColor.Cyan
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Brutal Company",
+                identity = "1",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true,
+                warning = " (HOST ONLY)",
+                warningColor = ConsoleColor.DarkRed
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Discord Rich Presence",
+                identity = "2",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true,
+            });
+            GenerateOption(new AstroOption()
+            {
+                option = "Retro Shading",
+                identity = "3",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            });
             Console.WriteLine("╚════════════════════════════════════════════╝\n\n");
-            GenerateOption("Option : ", "?", ConsoleColor.Magenta, false, false);
+            GenerateOption(new AstroOption()
+            {
+                option = "Option : ",
+                identity = "?",
+                color = ConsoleColor.Magenta,
+                matchMenu = false,
+                newLine = false
+            });
             var currOption = Console.ReadLine();
             switch (currOption)
             {
                 case "0":
                     ConsoleAnimation("Would you like to enable or disable Astro Menu?");
-                    GenerateOption("Enable", "0", ConsoleColor.DarkGreen, false, false);
-                    GenerateOption("Disable", "1", ConsoleColor.DarkRed, false, false);
+                    GenerateOption(new AstroOption() { option = "Enable", identity = "0", color = ConsoleColor.DarkGreen, matchMenu = false, newLine = true });
+                    GenerateOption(new AstroOption() { option = "Disable", identity = "1", color = ConsoleColor.DarkRed, matchMenu = false, newLine = true });
                     var currOption2 = Console.ReadLine();
                     switch (currOption2)
                     {
                         case "0":
                             AstroMenu(true);
-                            ConsoleAnimation("Astro Menu Enabled!");
+                            ConsoleAnimation("Astro Menu Enabled!");    
                             break;
                         case "1":
                             AstroMenu(false);
@@ -725,8 +982,8 @@ internal class Program
                     break;
                 case "1":
                     ConsoleAnimation("Would you like to enable or disable Brutal Company?");
-                    GenerateOption("Enable", "0", ConsoleColor.DarkGreen, false, false);
-                    GenerateOption("Disable", "1", ConsoleColor.DarkRed, false, false);
+                    GenerateOption(new AstroOption() { option = "Enable", identity = "0", color = ConsoleColor.DarkGreen, matchMenu = false, newLine = true });
+                    GenerateOption(new AstroOption() { option = "Disable", identity = "1", color = ConsoleColor.DarkRed, matchMenu = false, newLine = true });
                     var currOption3 = Console.ReadLine();
                     switch (currOption3)
                     {
@@ -745,6 +1002,80 @@ internal class Program
                     }
                     Thread.Sleep(2000);
                     break;
+                case "2":
+                    ConsoleAnimation("Would you like to enable or disable Discord Rich Presence?");
+                    GenerateOption(new AstroOption()
+                    {
+                        option = "Enable",
+                        identity = "0",
+                        color = ConsoleColor.DarkGreen,
+                        matchMenu = false,
+                        newLine = true
+                    });
+                    GenerateOption(new AstroOption()
+                    {
+                        option = "Disable",
+                        identity = "1",
+                        color = ConsoleColor.DarkRed,
+                        matchMenu = false,
+                        newLine = true
+                    });
+                    var currOption4 = Console.ReadLine();
+                    switch (currOption4)
+                    {
+                        case "0":
+                            SetColor(ConsoleColor.DarkRed);
+                            ConsoleAnimation("Error: This feature is currently disabled.");
+                            break;
+                        case "1":
+                            SetColor(ConsoleColor.DarkRed);
+                            ConsoleAnimation("Error: This feature is currently disabled.");
+                            break;
+                        default:
+                            SetColor(ConsoleColor.DarkRed);
+                            ConsoleAnimation("Invalid Option.");
+                            break;
+                    }
+                    Thread.Sleep(2000);
+                    break;
+                case "3":
+                    ConsoleAnimation("Would you like to Install or Remove Retro Shading?");
+                    GenerateOption(new AstroOption()
+                    {
+                        option = "Install",
+                        identity = "0",
+                        color = ConsoleColor.DarkGreen,
+                        matchMenu = false,
+                        newLine = true
+                    });
+                    GenerateOption(new AstroOption()
+                    {
+                        option = "Remove",
+                        identity = "1",
+                        color = ConsoleColor.DarkRed,
+                        matchMenu = false,
+                        newLine = true
+                    });
+                    var currOption5 = Console.ReadLine();
+                    switch (currOption5)
+                    {
+                        case "0":
+                            RetroShading(true);
+                            break;
+                        case "1":
+                            RetroShading(false);
+                            break;
+                        default:
+                            SetColor(ConsoleColor.DarkRed);
+                            ConsoleAnimation("Invalid Option.");
+                            break;
+                    }
+                    Thread.Sleep(2000);
+                    break;
+                case "9":
+                    Console.Clear();
+                    AppHandler();
+                    break;
                 default:
                     SetColor(ConsoleColor.DarkRed);
                     ConsoleAnimation("Invalid Option.");
@@ -752,9 +1083,18 @@ internal class Program
                     break;
             }
         }
-        public static void GenerateOption(string Option, string identity, ConsoleColor color, bool matchMenu = true, bool newLine = true)
+        public static void GenerateOption(AstroOption options)
         {
-            // Probably much better ways to do this, but this works ig
+            // lol
+            var Option = options.option ?? "";
+            var identity = options.identity ?? "";
+            var color = options.color ?? ConsoleColor.Gray;
+            var matchMenu = options.matchMenu ?? true;
+            var newLine = options.newLine ?? true;
+            var warning = options.warning ?? "";
+            var warningColor = options.warningColor ?? ConsoleColor.Gray;
+
+            // set cursor to console center
             var originalConsoleColor = Console.ForegroundColor;
             SetColor(color);
             if (matchMenu == true)
@@ -781,7 +1121,9 @@ internal class Program
                     SetColor(ConsoleColor.Gray);
                     Console.SetCursorPosition(old, Console.CursorTop);
                 }
-                Console.Write(Option + "\n");
+                Console.Write(Option);
+                SetColor(warningColor);
+                Console.Write(warning + "\n");
             }
             else 
             {
@@ -794,12 +1136,23 @@ internal class Program
                     SetColor(ConsoleColor.Gray);
                     Console.SetCursorPosition(old, Console.CursorTop);
                 }
-                Console.Write(Option); 
+                Console.Write(Option);
+                SetColor(warningColor);
+                Console.Write(warning);
             }
             SetColor(originalConsoleColor);
         }
     }
-
+    public class AstroOption
+    {
+        public string option { get; set; }
+        public string warning { get; set; }
+        public string identity { get; set; }
+        public ConsoleColor? color { get; set; }
+        public ConsoleColor? warningColor { get; set; }
+        public bool? matchMenu { get; set; }
+        public bool? newLine { get; set; }
+    }
     public class ServerObj
     {
         public string url { get; set; }
