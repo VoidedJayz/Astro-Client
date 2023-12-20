@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,12 +8,17 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Net.Mime;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 internal class Program
 {
     [DllImport("user32.dll")]
@@ -22,17 +28,20 @@ internal class Program
     private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
     [DllImport("kernel32.dll", ExactSpelling = true)]
     private static extern IntPtr GetConsoleWindow();
-    [STAThread]
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    static extern bool SetForegroundWindow(IntPtr hWnd);
+
     private static void Main(string[] args)
     {
+        Utilities.StopResizing();
         // Begin Application
         Console.Title = $"Astro Boyz {Utilities.currentVersion}";
         Console.CursorVisible = false;
         Console.SetWindowSize(100, 30);
-        Utilities.lethalCompanyPath = Utilities.GetSteamPath() + "\\steamapps\\common\\Lethal Company";
-        Utilities.StopResizing();
-        Utilities.CheckLethalCompany();
         Utilities.ReloadUpdater();
+        Utilities.CheckSteamInstallData();
+        Utilities.CheckLethalCompany();
         Utilities.CheckCustomPath();
         Utilities.RefreshPath();
 
@@ -53,9 +62,8 @@ internal class Program
         {
             Utilities.SetColor(ConsoleColor.DarkRed);
             Console.Title = "ASTRO BOYZ! | Lethal Company Not Found";
-            Utilities.ConsoleAnimation("Error: Lethal Company Not Found.");
+            Utilities.ConsoleAnimation("Well, This sucks. We can't seem to find your Lethal Company Path.");
             Utilities.ConsoleAnimation("If you believe this was a mistake, Contact VoidedJayz / Astro Boyz for Support.");
-            Utilities.ConsoleAnimation("If you recently modified the Lethal Company Location, delete 'cpath.txt'.");
             Utilities.ConsoleAnimation("Alternatively, you can select the install path for Lethal Company.");
             Utilities.GenerateOption(new AstroOption()
             {
@@ -122,13 +130,19 @@ internal class Program
     private class Utilities
     {
         // Variables
-        public static string currentVersion = "2.0.0";
+        public static string currentVersion = "2.2.0";
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
+        public static string currentSteamName = null;
         public static string bepInExPath = $"{lethalCompanyPath}\\BepInEx";
         public static string pluginsPath = $"{bepInExPath}\\plugins";
         public static string modzUrl = "https://cdn.astroswrld.club/secure/Files/modpack.zip";
-        public static string reshadeUrl = "https://cdn.astroswrld.club/secure/Files/reshade.zip";
+        public static string reshadeUrl = "https://cdn.astroswrld.club/secure/Files/RetroShader.ini";
+        public static string reshadeUrl2 = "https://cdn.astroswrld.club/secure/Files/shaderinstructions.txt";
+        public static string brutalState;
+        public static string astroState;
+        public static string richState;
+        public static string retroState;
         public static WebClient server = new WebClient();
 
         // Console Functions
@@ -229,66 +243,66 @@ internal class Program
                     ConsoleAnimation("Press any key to continue...");
                     Console.ReadLine();
                     AppHandler();
-                    return;
                 }
                 using (var client = server)
                 {
                     SetColor(ConsoleColor.Magenta);
-                    ConsoleAnimation("Downloading Zip...");
+                    ConsoleAnimation("Downloading...");
                     try
                     {
                         client.DownloadProgressChanged += (s, e) =>
                         {
                             Console.Title = $"ASTRO BOYZ! | Downloading... | {e.ProgressPercentage}% ({e.BytesReceived}/{e.TotalBytesToReceive})";
                         };
-                        client.DownloadFileAsync(new Uri(GenerateSecureDownload(reshadeUrl, 30)), $"{lethalCompanyPath}\\temp_astro.zip");
+                        client.DownloadFileAsync(new Uri("https://reshade.me/downloads/ReShade_Setup_5.9.2.exe"), $"{lethalCompanyPath}\\setup.exe");
+                        while (client.IsBusy)
+                        {
+                            Thread.Sleep(500);
+                        }
+                        client.DownloadFileAsync(new Uri(GenerateSecureDownload(reshadeUrl, 30)), $"{lethalCompanyPath}\\RetroShader.ini");
+                        while (client.IsBusy)
+                        {
+                            Thread.Sleep(500);
+                        }
+                        client.DownloadFileAsync(new Uri(GenerateSecureDownload(reshadeUrl2, 30)), $"{lethalCompanyPath}\\intructions.txt");
                     }
                     catch (Exception ex)
                     {
-                        ConsoleAnimation($"Error Downloading Mods: {ex.Message}");
+                        ConsoleAnimation($"Error Downloading Shaders: {ex.Message}");
                         Thread.Sleep(2500);
                         return;
                     }
-                    while (client.IsBusy)
-                    {
-                        Thread.Sleep(500);
-                    }
-                    ConsoleAnimation("Zip Download Complete!");
-                    ConsoleAnimation("Opening Zip...");
+                    ConsoleAnimation("Opening Setup...");
                     SetColor(ConsoleColor.Magenta);
+                    Process p1 = null;
+                    Process p2 = null;
                     try
                     {
-                        using (ZipArchive archive = ZipFile.OpenRead($"{lethalCompanyPath}\\temp_astro.zip"))
-                        {
-                            using (var progress = new ProgressBar())
-                            {
-                                for (int i = 0; i <= archive.Entries.Count; i++)
-                                {
-                                    progress.Report((double)i / archive.Entries.Count);
-                                    Console.Title = $"ASTRO BOYZ! | Installing Reshade... | {i}/{archive.Entries.Count}";
-                                    Thread.Sleep(1);
-                                }
-                            }
-
-                        }
-                        Console.Write($"                                                                    ");
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        SetColor(ConsoleColor.Cyan);
-                        ConsoleAnimation("Extracting Files...");
-                        ZipFile.ExtractToDirectory($"{lethalCompanyPath}\\temp_astro.zip", $"{lethalCompanyPath}");
-                        SetColor(ConsoleColor.Green);
-                        ConsoleAnimation("Finished!");
-                        File.Delete($"{lethalCompanyPath}\\temp_astro.zip");
-                        Thread.Sleep(2500);
+                        p1 = Process.Start($"{lethalCompanyPath}\\setup.exe");
+                        p2 = Process.Start($"{lethalCompanyPath}\\intructions.txt");
+                        SetForegroundWindow(p1.MainWindowHandle);
+                        SetForegroundWindow(p2.MainWindowHandle);
                     }
                     catch (Exception ex)
                     {
                         SetColor(ConsoleColor.DarkRed);
-                        ConsoleAnimation($"Error Extracting Files: {ex.Message}");
+                        ConsoleAnimation($"Error Starting Processes: {ex.Message}");
                         ConsoleAnimation("Perhaps the file was corrupted?");
                         ConsoleAnimation("Press any key to continue...");
                         Console.ReadLine();
                     }
+                    SetColor(ConsoleColor.DarkRed);
+                    ConsoleAnimation("Please follow the instructions in the window(s) that were opened!!!!");
+                    while (p1.HasExited == false)
+                    {
+                        Console.Title = $"ASTRO BOYZ! | Waiting for Setup to Finish or Exit... | {p1.MainWindowTitle}";
+                        Thread.Sleep(500);
+                    }
+                    if (File.Exists($"{lethalCompanyPath}\\ReShade.ini"))
+                    {
+                        ReplaceIniValue($"{lethalCompanyPath}\\ReShade.ini", "INPUT", "KeyOverlay", "73,1,0,0");
+                    }
+                    Thread.Sleep(2000);
                 }
             }
             else
@@ -309,6 +323,8 @@ internal class Program
                     File.Delete(lethalCompanyPath + "\\ReShade.ini");
                     File.Delete(lethalCompanyPath + "\\ReShade.log");
                     File.Delete(lethalCompanyPath + "\\ReShadePreset.ini");
+                    File.Delete(lethalCompanyPath + "\\setup.exe");
+                    File.Delete(lethalCompanyPath + "\\intructions.txt");
                     SetColor(ConsoleColor.Green);
                     ConsoleAnimation("Shaders Removed!");
                     Thread.Sleep(2500);
@@ -566,7 +582,6 @@ internal class Program
         {
             // Rahhh spaghetti code
             SetColor(ConsoleColor.Magenta);
-            ConsoleAnimation("Checking for updates...");
             if (File.Exists("LethalUpdater.exe"))
             {
                 File.Delete("LethalUpdater.exe");
@@ -577,23 +592,47 @@ internal class Program
                 var verions = server.DownloadString(GenerateSecureDownload("https://cdn.astroswrld.club/secure/Versions/version", 10));
                 var updVersion = verions.Split('|')[0];
                 var lethalVersion = verions.Split('|')[1];
-
-                ConsoleAnimation($"Grabbed Versions! [Step 1]");
-
                 // Download Updater
                 client.DownloadFileAsync(new Uri(GenerateSecureDownload("https://cdn.astroswrld.club/secure/Files/LethalUpdater.exe", 30)), $"LethalUpdater.exe");
                 while (client.IsBusy)
                 {
                     Thread.Sleep(100);
                 }
-                ConsoleAnimation($"Updater Reloaded! New Version {updVersion} [Step 2]");
 
                 // Check Astro Version
                 if (lethalVersion != currentVersion)
                 {
-                    ConsoleAnimation($"New Version Available! {lethalVersion} We recommend updating astro to the latest version.");
-                    ConsoleAnimation("Press any key to continue...");
-                    Console.ReadLine();
+                    ConsoleAnimation("There is a new version available! Version: " + lethalVersion);
+                    ConsoleAnimation($"We recommend updating astro to the latest version.");
+                    ConsoleAnimation("Would you like to update now?");
+                    GenerateOption(new AstroOption()
+                    {
+                        option = "Yes",
+                        identity = "0",
+                        color = ConsoleColor.DarkGreen,
+                        matchMenu = false,
+                        newLine = true
+                    });
+                    GenerateOption(new AstroOption()
+                    {
+                        option = "No",
+                        identity = "1",
+                        color = ConsoleColor.DarkRed,
+                        matchMenu = false,
+                        newLine = true
+                    });
+                    var currOption = Console.ReadLine();
+                    switch (currOption)
+                    {
+                        case "0":
+                            ForceAppUpdate();
+                            break;
+                        case "1":
+                            break;
+                        default:
+                            ConsoleAnimation("Invalid Option. Please try again.");
+                            break;
+                    }
                 }
                 else
                 {
@@ -603,8 +642,53 @@ internal class Program
 
             }
         }
+        public static void ForceAppUpdate()
+        {
+            Process.Start("LethalUpdater.exe");
+            Environment.Exit(0);
+        }
 
         // Utility Functions
+        public static string ShowFolderDialog()
+        {
+            string selectedFolder = null;
+
+            try
+            {
+                Console.WriteLine("Waiting...");
+                using (var dialog = new FolderBrowserDialog())
+                {
+
+                    // Show the FolderBrowserDialog
+                    DialogResult result = dialog.ShowDialog();
+
+                    // Check if the user clicked OK
+                    if (result == DialogResult.OK)
+                    {
+                        // Get the selected folder
+                        selectedFolder = dialog.SelectedPath;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation($"Error: {ex.Message}");
+            }
+
+            return selectedFolder;
+        }
+        public static string GetFullUserName()
+        {
+            WindowsIdentity windowsIdentity = WindowsIdentity.GetCurrent();
+
+            if (windowsIdentity != null)
+            {
+                return windowsIdentity.Name;
+            }
+
+            return null;
+        }
         public static string GetSteamPath()
         {
             // Messy way of doing things, but it gets the job done
@@ -628,6 +712,89 @@ internal class Program
             currentSteamId = idFound.ToString();
             return steamPath;
         }
+        public static void GetExtrasStates() 
+        {             
+            if (File.Exists($"{pluginsPath}\\AstroMenu.dll"))
+            {
+                astroState = "Enabled";
+            }
+            else
+            {
+                astroState = "Disabled";
+            }
+            if (File.Exists($"{pluginsPath}\\BrutalCompanyPlus.dll"))
+            {
+                brutalState = "Enabled";
+            }
+            else
+            {
+                brutalState = "Disabled";
+            }
+            if (File.Exists($"{lethalCompanyPath}\\MLLoader\\Mods\\LethalCompanyPresence.dll"))
+            {
+                richState = "Enabled";
+            }
+            else
+            {
+                richState = "Disabled";
+            }
+            if (CheckForExistingShaders() == true)
+            {
+                retroState = "Installed";
+            }
+            else
+            {
+                retroState = "Not Installed";
+            }
+
+            ConsoleAnimation("Astro Menu: ");
+            if (astroState == "Enabled")
+            {
+                SetColor(ConsoleColor.DarkGreen);
+                ConsoleAnimation(astroState);
+            }
+            else
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation(astroState);
+            }
+
+            ConsoleAnimation("Brutal Company: ");
+            if (brutalState == "Enabled")
+            {
+                SetColor(ConsoleColor.DarkGreen);
+                ConsoleAnimation(brutalState);
+            }
+            else
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation(brutalState);
+            }
+
+            ConsoleAnimation("Discord Rich Presence: ");
+            if (richState == "Enabled")
+            {
+                SetColor(ConsoleColor.DarkGreen);
+                ConsoleAnimation(richState);
+            }
+            else
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation(richState);
+            }
+
+            ConsoleAnimation("Retro Shading: ");
+            if (retroState == "Installed")
+            {
+                SetColor(ConsoleColor.DarkGreen);
+                ConsoleAnimation(retroState);
+            }
+            else
+            {
+                SetColor(ConsoleColor.DarkRed);
+                ConsoleAnimation(retroState);
+            }
+        }
         public static void GetInstalledModNames()
         {
             Console.Clear();
@@ -648,20 +815,6 @@ internal class Program
                 ConsoleAnimation($"Error: {ex.Message}");
             }
         }
-        public static void ForceAppUpdate()
-        {
-            Process.Start("LethalUpdater.exe");
-            Environment.Exit(0);
-        }
-        public static void CheckCustomPath()
-        {
-            if (File.Exists("cpath.txt"))
-            {
-                lethalCompanyPath = File.ReadAllText("cpath.txt").ToString();
-                Console.Clear();
-                ConsoleAnimation(lethalCompanyPath);
-            }
-        }
         public static void RefreshPath()
         {
             // Just to prevent something from breaking
@@ -670,35 +823,6 @@ internal class Program
                 bepInExPath = $"{lethalCompanyPath}\\BepInEx";
                 pluginsPath = $"{bepInExPath}\\plugins";
             }
-        }
-        public static void CheckLethalCompany()
-        {
-            Process[] lc = Process.GetProcessesByName("Lethal Company");
-            if (lc.Length != 0)
-            {
-                SetColor(ConsoleColor.DarkRed);
-                Console.Clear();
-                ConsoleAnimation("Lethal Company is currently running. Please close the game before continuing.\n");
-                ConsoleAnimation("Press any key to continue...");
-                Console.ReadLine();
-                CheckLethalCompany();
-            }
-        }
-        public static bool CheckForExistingMods()
-        {
-            if (Directory.Exists(bepInExPath) || Directory.Exists(lethalCompanyPath + "\\MLLoader") || File.Exists($"{lethalCompanyPath}\\winhttp.dll") || File.Exists($"{lethalCompanyPath}\\doorstop_config.ini"))
-            {
-                return true;
-            }
-            return false;
-        }
-        public static bool CheckForExistingShaders()
-        {
-            if (Directory.Exists(lethalCompanyPath + "\\reshade-shaders") || File.Exists(lethalCompanyPath + "\\dxgi.dll") || File.Exists(lethalCompanyPath + "\\ReShade.ini") || File.Exists(lethalCompanyPath + "\\ReShade.log") || File.Exists(lethalCompanyPath + "\\ReShadePreset.ini"))
-            {
-                return true;
-            }
-            return false;
         }
         public static void OpenLethalCompanyFolder()
         {
@@ -745,38 +869,183 @@ internal class Program
                 ConsoleAnimation($"Error closing Steam game: {ex.Message}");
             }
         }
-        public static string ShowFolderDialog()
+        public static void ReplaceIniValue(string filePath, string section, string key, string newValue)
         {
-            string selectedFolder = null;
+            // Read all lines from the file
+            List<string> lines = new List<string>(File.ReadAllLines(filePath));
 
-            using (var dialog = new FolderBrowserDialog())
+            // Create a regular expression pattern to match the key within the specified section
+            string pattern = $@"^\s*{key}\s*=\s*(.*)\s*$";
+
+            // Iterate through the lines and find the key within the specified section
+            for (int i = 0; i < lines.Count; i++)
             {
-                // Set the initial directory (optional)
-                dialog.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-
-                // Show the FolderBrowserDialog
-                DialogResult result = dialog.ShowDialog();
-
-                // Check if the user clicked OK
-                if (result == DialogResult.OK)
+                if (lines[i].Trim() == $"[{section}]")
                 {
-                    // Get the selected folder
-                    selectedFolder = dialog.SelectedPath;
+                    for (int j = i + 1; j < lines.Count; j++)
+                    {
+                        Match match = Regex.Match(lines[j], pattern);
+
+                        if (match.Success)
+                        {
+                            // Replace the old value with the new value
+                            lines[j] = $"{key}={newValue}";
+                            break;
+                        }
+                        else if (lines[j].StartsWith("["))
+                        {
+                            // If a new section is encountered, break the inner loop
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
 
-            return selectedFolder;
+            // Write the modified lines back to the file
+            File.WriteAllLines(filePath, lines);
         }
-        public static string GetFullUserName()
-        {
-            WindowsIdentity windowsIdentity = WindowsIdentity.GetCurrent();
 
-            if (windowsIdentity != null)
+        // Checks
+        public static void CheckCurrentStates()
+        {
+            if (File.Exists($"{pluginsPath}\\AstroMenu.dll"))
             {
-                return windowsIdentity.Name;
+                astroState = "Enabled";
+            }
+            else
+            {
+                astroState = "Disabled";
+            }
+            if (File.Exists($"{pluginsPath}\\BrutalCompanyPlus.dll"))
+            {
+                brutalState = "Enabled";
+            }
+            else
+            {
+                brutalState = "Disabled";
+            }
+            if (File.Exists($"{lethalCompanyPath}\\MLLoader\\Mods\\LethalCompanyPresence.dll"))
+            {
+                richState = "Enabled";
+            }
+            else
+            {
+                richState = "Disabled";
+            }
+            if (CheckForExistingShaders() == true)
+            {
+                retroState = "Installed";
+            }
+            else
+            {
+                retroState = "Not Installed";
+            }
+        }
+        public static void CheckSteamInstallData()
+        {
+            string dir = GetSteamPath();
+
+            string[] libraryFolders = GetLibraryFolders(dir);
+
+            foreach (string libraryFolder in libraryFolders)
+            {
+                Console.WriteLine($"Checking games in library folder: {libraryFolder}");
+                CheckForGames(libraryFolder);
             }
 
-            return null;
+            string[] GetLibraryFolders(string steamDirectory)
+            {
+                string libraryFoldersPath = Path.Combine(steamDirectory, "steamapps", "libraryfolders.vdf");
+                var libraryFoldersList = new System.Collections.Generic.List<string>();
+
+                if (File.Exists(libraryFoldersPath))
+                {
+                    string libraryFoldersContent = File.ReadAllText(libraryFoldersPath);
+
+                    // Use regular expression to extract library folder paths
+                    MatchCollection matches = Regex.Matches(libraryFoldersContent, "\"\\d+\"\\s+\"(.+?)\"");
+
+                    foreach (Match match in matches)
+                    {
+                        string libraryFolderPath = match.Groups[1].Value;
+                        libraryFoldersList.Add(libraryFolderPath);
+                    }
+                }
+
+                // Include the default library folder
+                libraryFoldersList.Add(Path.Combine(steamDirectory, "steamapps", "common"));
+
+                return libraryFoldersList.ToArray();
+            }
+            void CheckForGames(string libraryFolderPath)
+            {
+                if (Directory.Exists(libraryFolderPath))
+                {
+                    // List all directories within the library folder
+                    string[] gameFolders = Directory.GetDirectories(libraryFolderPath);
+
+                    if (gameFolders.Length > 0)
+                    {
+                        foreach (string gameFolder in gameFolders)
+                        {
+                            string gameName = new DirectoryInfo(gameFolder).Name;
+                            Console.WriteLine($" - Game installed: {gameName}");
+                            if (gameName == "Lethal Company")
+                            {
+                                lethalCompanyPath = gameFolder;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine(" - No games found in this library folder.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($" - No Access.");
+                }
+            }
+            Thread.Sleep(500);
+        }
+        public static void CheckLethalCompany()
+        {
+            Process[] lc = Process.GetProcessesByName("Lethal Company");
+            if (lc.Length != 0)
+            {
+                SetColor(ConsoleColor.DarkRed);
+                Console.Clear();
+                ConsoleAnimation("Lethal Company is currently running. Please close the game before continuing.\n");
+                ConsoleAnimation("Press any key to continue...");
+                Console.ReadLine();
+                CheckLethalCompany();
+            }
+        }
+        public static bool CheckForExistingMods()
+        {
+            if (Directory.Exists(bepInExPath) || Directory.Exists(lethalCompanyPath + "\\MLLoader") || File.Exists($"{lethalCompanyPath}\\winhttp.dll") || File.Exists($"{lethalCompanyPath}\\doorstop_config.ini"))
+            {
+                return true;
+            }
+            return false;
+        }
+        public static bool CheckForExistingShaders()
+        {
+            if (Directory.Exists(lethalCompanyPath + "\\reshade-shaders") || File.Exists(lethalCompanyPath + "\\dxgi.dll") || File.Exists(lethalCompanyPath + "\\ReShade.ini") || File.Exists(lethalCompanyPath + "\\ReShade.log") || File.Exists(lethalCompanyPath + "\\ReShadePreset.ini"))
+            {
+                return true;
+            }
+            return false;
+        }
+        public static void CheckCustomPath()
+        {
+            if (File.Exists("cpath.txt"))
+            {
+                lethalCompanyPath = File.ReadAllText("cpath.txt").ToString();
+                Console.Clear();
+                ConsoleAnimation(lethalCompanyPath);
+            }
         }
 
         // Misc Functions
@@ -812,8 +1081,8 @@ internal class Program
             CenterText("/**//////**       /**    /**    /**  //** //**     **         //****    *     ");
             CenterText("/**     /** ********     /**    /**   //** //*******           //**    ******");
             CenterText("//      // ////////      //     //     //   ///////             //     ////// ");
+            CenterText($"Version: {currentVersion}");
             SetColor(ConsoleColor.DarkBlue);
-            ConsoleAnimation($"Welcome, {Environment.UserName}! (STEAM: {currentSteamId})");
             ConsoleAnimation("Please type a numbered option below, then press enter.");
             SetColor(ConsoleColor.Magenta);
             Console.WriteLine();
@@ -896,19 +1165,27 @@ internal class Program
                 matchMenu = false,
                 newLine = false
             });
+
         }
         public static void ExtrasMenu()
         {
             Console.Clear();
+            CheckCurrentStates();
             SetColor(ConsoleColor.DarkMagenta);
-            CenterText("          :::        ::::::::   :::::::::::   :::::::::       :::::::: \r");
-            CenterText("       :+: :+:     :+:    :+:      :+:       :+:    :+:     :+:    :+: \r");
-            CenterText("     +:+   +:+    +:+             +:+       +:+    +:+     +:+    +:+  \r");
-            CenterText("   +#++:++#++:   +#++:++#++      +#+       +#++:++#:      +#+    +:+   \r");
-            CenterText("  +#+     +#+          +#+      +#+       +#+    +#+     +#+    +#+    \r");
-            CenterText(" #+#     #+#   #+#    #+#      #+#       #+#    #+#     #+#    #+#     \r");
-            CenterText("###     ###    ########       ###       ###    ###      ########       \n");
+            CenterText("     **      ******** ********** *******     *******         **      **  **** ");
+            CenterText("    ****    **////// /////**/// /**////**   **/////**       /**     /** */// *");
+            CenterText("   **//**  /**           /**    /**   /**  **     //**      /**     /**/    /*");
+            CenterText("  **  //** /*********    /**    /*******  /**      /**      //**    **    *** ");
+            CenterText(" **********////////**    /**    /**///**  /**      /**       //**  **    *//  ");
+            CenterText("/**//////**       /**    /**    /**  //** //**     **         //****    *     ");
+            CenterText("/**     /** ********     /**    /**   //** //*******           //**    ******");
+            CenterText("//      // ////////      //     //     //   ///////             //     ////// ");
+            CenterText($"Version: {currentVersion}");
             SetColor(ConsoleColor.Magenta);
+            Console.WriteLine($"Astro Menu: {astroState}");
+            Console.WriteLine($"Brutal Company: {brutalState}");
+            Console.WriteLine($"Discord Rich Presence: {richState}");
+            Console.WriteLine($"Retro Shading: {retroState}");
             Console.WriteLine();
             Console.WriteLine("╔════════════════════════════════════════════╗");
             GenerateOption(new AstroOption() 
@@ -947,6 +1224,14 @@ internal class Program
                 matchMenu = true,
                 newLine = true
             });
+            GenerateOption(new AstroOption()
+            {
+                option = "Back",
+                identity = "9",
+                color = ConsoleColor.Magenta,
+                matchMenu = true,
+                newLine = true
+            }); 
             Console.WriteLine("╚════════════════════════════════════════════╝\n\n");
             GenerateOption(new AstroOption()
             {
@@ -1026,11 +1311,11 @@ internal class Program
                     {
                         case "0":
                             SetColor(ConsoleColor.DarkRed);
-                            ConsoleAnimation("Error: This feature is currently disabled.");
+                            RichPresence(true);
                             break;
                         case "1":
                             SetColor(ConsoleColor.DarkRed);
-                            ConsoleAnimation("Error: This feature is currently disabled.");
+                            RichPresence(false);
                             break;
                         default:
                             SetColor(ConsoleColor.DarkRed);

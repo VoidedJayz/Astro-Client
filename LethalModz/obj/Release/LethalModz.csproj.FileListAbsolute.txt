@@ -19,3 +19,6 @@ C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\Leth
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Release\LethalModz.csproj.CoreCompileInputs.cache
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Release\LethalModz.exe
 C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Release\LethalModz.pdb
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\bin\Release\Newtonsoft.Json.dll
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\bin\Release\Newtonsoft.Json.xml
+C:\Users\voide\OneDrive\Documents\ASTRO BOYZ\Coding\Astros World\LethalModz\LethalModz\obj\Release\LethalModz.csproj.CopyComplete
