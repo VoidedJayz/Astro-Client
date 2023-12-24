@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -100,7 +100,14 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Astro.cs" />
+    <Compile Include="Classes\AstroConfig.cs" />
+    <Compile Include="Classes\AstroFileSystem.cs" />
+    <Compile Include="Classes\AstroObjects.cs" />
+    <Compile Include="Classes\AstroServer.cs" />
+    <Compile Include="Classes\AstroUtils.cs" />
+    <Compile Include="Classes\AstroWindowManager.cs" />
+    <Compile Include="Classes\ProgressBar.cs" />
+    <Compile Include="ConsoleMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -109,7 +116,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="icon.ico" />
+    <Content Include="AppIcon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
