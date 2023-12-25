@@ -27,7 +27,7 @@ namespace Astro.Classes
     {
         public static AstroConfig currentConfig;
         public static WebClient server = new WebClient();
-        public static Version currentVersion = new Version("2.5.5");
+        public static Version currentVersion = new Version("2.5.7");
         public static string lethalCompanyPath = null;
         public static string currentSteamId = null;
         public static string currentSteamName = null;
@@ -58,7 +58,11 @@ namespace Astro.Classes
             { "MenuMusic\\FLAUNT.mp3", "https://cdn.astroswrld.club/Client/Dependencies/FLAUNT.mp3" },
             { "MenuMusic\\Drag_Me_Down.mp3", "https://cdn.astroswrld.club/Client/Dependencies/Drag_Me_Down.mp3" },
             { "MenuMusic\\RAPTURE.mp3", "https://cdn.astroswrld.club/Client/Dependencies/RAPTURE.mp3" },
-            { "MenuMusic\\I_Am_All_Of_Me.mp3", "https://cdn.astroswrld.club/Client/Dependencies/I_Am_All_Of_Me.mp3" }
+            { "MenuMusic\\I_Am_All_Of_Me.mp3", "https://cdn.astroswrld.club/Client/Dependencies/I_Am_All_Of_Me.mp3" },
+            { "MenuMusic\\Painkiller.mp3", "https://cdn.astroswrld.club/Client/Dependencies/Painkiller.mp3" },
+            { "MenuMusic\\messages_from_the_stars.mp3", "https://cdn.astroswrld.club/Client/Dependencies/messages_from_the_stars.mp3" },
+            { "MenuMusic\\Candle_Queen.mp3", "https://cdn.astroswrld.club/Client/Dependencies/Candle_Queen.mp3" },
+            { "MenuMusic\\Just_An_Attraction.mp3", "https://cdn.astroswrld.club/Client/Dependencies/Just_An_Attraction.mp3" }
         };
 
         // Console Functions
@@ -105,100 +109,119 @@ namespace Astro.Classes
         // Mod Functions
         public static void AstroMenu(bool state)
         {
+            AstroLogs.Log("AstroMenu: Start processing.");
+
+            CheckLethalCompany();
             try
             {
                 if (state == true)
                 {
-                    // Enable
                     AstroFileSystem.MoveFile($"{bepInExPath}\\core\\AstroMenu.dll", $"{pluginsPath}\\AstroMenu.dll");
+                    AstroLogs.Log("AstroMenu enabled.");
                 }
                 else
                 {
-                    // Remove
                     AstroFileSystem.MoveFile($"{pluginsPath}\\AstroMenu.dll", $"{bepInExPath}\\core\\AstroMenu.dll");
+                    AstroLogs.Log("AstroMenu disabled.");
                 }
             }
             catch (Exception ex)
             {
                 ConsoleAnimation($"Error: {ex.Message}");
+                AstroLogs.Log($"AstroMenu error: {ex.Message}");
                 Thread.Sleep(2000);
             }
+
+            AstroLogs.Log("AstroMenu: End processing.");
         }
         public static void BrutalCompany(bool state)
         {
+            AstroLogs.Log("BrutalCompany: Start processing.");
+
+            CheckLethalCompany();
+
             try
             {
                 if (state == true)
                 {
-                    // Enable
                     AstroFileSystem.MoveFile($"{bepInExPath}\\core\\BrutalCompanyPlus.dll", $"{pluginsPath}\\BrutalCompanyPlus.dll");
+                    AstroLogs.Log("BrutalCompany enabled.");
                 }
                 else
                 {
-                    // Remove
                     AstroFileSystem.MoveFile($"{pluginsPath}\\BrutalCompanyPlus.dll", $"{bepInExPath}\\core\\BrutalCompanyPlus.dll");
+                    AstroLogs.Log("BrutalCompany disabled.");
                 }
             }
             catch (Exception ex)
             {
                 ConsoleAnimation($"Error: {ex.Message}");
+                AstroLogs.Log($"BrutalCompany error: {ex.Message}");
                 Thread.Sleep(2000);
             }
+
+            AstroLogs.Log("BrutalCompany: End processing.");
         }
         public static void RichPresence(bool state)
         {
+            AstroLogs.Log("RichPresence: Start processing.");
+
+            CheckLethalCompany();
             var enabledPath = $"{pluginsPath}\\AstroRPC.dll";
             var disabledPath = $"{bepInExPath}\\core\\AstroRPC.dll";
-            // Check if file is missing
+
             if (!AstroFileSystem.FileExists(enabledPath) || !AstroFileSystem.FileExists(disabledPath))
             {
                 ConsoleAnimation("AstroRPC.dll is missing.");
+                AstroLogs.Log("AstroRPC.dll is missing.");
                 Thread.Sleep(2000);
                 return;
             }
-            if (state == true)
+
+            try
             {
-                if (richState == "Enabled")
+                if (state == true)
                 {
-                    ConsoleAnimation($"Rich Presence is already {richState}.");
-                    return;
-                }
-                else
-                {
-                    try
+                    // Enable
+                    if (richState != "Enabled")
                     {
                         AstroFileSystem.MoveFile(disabledPath, enabledPath);
+                        AstroLogs.Log("RichPresence enabled.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        ConsoleAnimation($"Error: {ex.Message}");
-                        Thread.Sleep(2000);
+                        ConsoleAnimation($"Rich Presence is already {richState}.");
+                        AstroLogs.Log($"Rich Presence is already {richState}.");
                     }
-                }
-            }
-            else
-            {
-                if (richState == "Disabled")
-                {
-                    ConsoleAnimation($"Rich Presence is already {richState}.");
-                    return;
                 }
                 else
                 {
-                    try
+                    // Disable
+                    if (richState != "Disabled")
                     {
                         AstroFileSystem.MoveFile(enabledPath, disabledPath);
+                        AstroLogs.Log("RichPresence disabled.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        ConsoleAnimation($"Error: {ex.Message}");
-                        Thread.Sleep(2000);
+                        ConsoleAnimation($"Rich Presence is already {richState}.");
+                        AstroLogs.Log($"Rich Presence is already {richState}.");
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                ConsoleAnimation($"Error: {ex.Message}");
+                AstroLogs.Log($"RichPresence error: {ex.Message}");
+                Thread.Sleep(2000);
+            }
+
+            AstroLogs.Log("RichPresence: End processing.");
         }
         public static void RetroShading(bool state)
         {
+            // Too lazy to make logs for this lol
+            CheckLethalCompany();
             if (state == true)
             {
                 if (CheckForExistingShaders() == true)
@@ -381,87 +404,54 @@ namespace Astro.Classes
         }
         public static void GetFolderPath()
         {
-            currentConfig.customPath = null;
-            currentConfig.Save();
-            // Main Prompt
-            ConsoleAnimation("Example: C:\\Program Files (x86)\\Steam\\steamapps\\common\\Lethal Company");
-            ConsoleAnimation("Please type a folder path or you can just press 'Enter' to select a folder.");
-            string folderPath = Console.ReadLine(); Console.WriteLine();
-            if (string.IsNullOrWhiteSpace(folderPath))
-            {
-                using (var folderBrowserDialog = new FolderBrowserDialog())
-                {
-                    DialogResult result = folderBrowserDialog.ShowDialog();
-
-                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
-                    {
-                        folderPath = folderBrowserDialog.SelectedPath;
-                    }
-                }
-            }
-            else if (folderPath.Contains('"'))
-            {
-                folderPath = folderPath.Split('"')[1];
-            }
-
             try
             {
+                AstroLogs.Log("Starting to get folder path.");
+
+                currentConfig.customPath = null;
+                currentConfig.Save();
+                AstroLogs.Log("Current custom path reset and configuration saved.");
+
+                // Main Prompt
+                ConsoleAnimation("Example: C:\\Program Files (x86)\\Steam\\steamapps\\common\\Lethal Company");
+                ConsoleAnimation("Please type a folder path or you can just press 'Enter' to select a folder.");
+                string folderPath = Console.ReadLine();
+                Console.WriteLine();
+                AstroLogs.Log($"User entered folder path: {folderPath}");
+
+                if (string.IsNullOrWhiteSpace(folderPath))
+                {
+                    using (var folderBrowserDialog = new FolderBrowserDialog())
+                    {
+                        DialogResult result = folderBrowserDialog.ShowDialog();
+
+                        if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                        {
+                            folderPath = folderBrowserDialog.SelectedPath;
+                            AstroLogs.Log($"Folder path selected using browser dialog: {folderPath}");
+                        }
+                    }
+                }
+                else if (folderPath.Contains('"'))
+                {
+                    folderPath = folderPath.Split('"')[1];
+                    AstroLogs.Log($"Folder path adjusted from user input: {folderPath}");
+                }
+
                 ConsoleAnimation(folderPath);
+                ConsoleAnimation("Path Saved!");
 
+                // Set Other Values to make sure it works
+                lethalCompanyPath = folderPath;
+                currentConfig.customPath = folderPath;
+                currentConfig.Save();
+                RefreshPath();
+                AstroLogs.Log($"Path saved and set: {folderPath}");
             }
-            catch { }
-            ConsoleAnimation("Path Saved!");
-
-            // Set Other Values to make sure it works
-            lethalCompanyPath = folderPath;
-            currentConfig.customPath = folderPath;
-            currentConfig.Save();
-            RefreshPath();
-        }
-        public static void KeepSize()
-        {
-            Console.SetWindowSize(100, 30);
-            Console.BufferWidth = Console.WindowWidth;
-            Console.BufferHeight = Console.WindowHeight;
-        }
-        public static void SillyMusicMenuOption()
-        {
-            ConsoleAnimation("Would you like to Play or Pause?");
-            GenerateOption(new MenuOption()
+            catch (Exception ex)
             {
-                option = "Play",
-                identity = "0",
-                color = Color.DarkGreen,
-                matchMenu = false,
-                newLine = true
-            });
-            GenerateOption(new MenuOption()
-            {
-                option = "Pause",
-                identity = "1",
-                color = Color.DarkRed,
-                matchMenu = false,
-                newLine = true
-            });
-            var currOption3 = Console.ReadLine(); Console.WriteLine();
-            switch (currOption3)
-            {
-                case "0":
-                    currentConfig.menuMusic = true;
-                    currentConfig.Save();
-                    ConsoleAnimation("Music Enabled!");
-                    break;
-                case "1":
-                    currentConfig.menuMusic = false;
-                    currentConfig.Save();
-                    ConsoleAnimation("Music Disabled!");
-                    break;
-                default:
-                    SetColor(Color.DarkRed);
-                    ConsoleAnimation("Invalid Option. Please try again.");
-                    break;
+                AstroLogs.Log($"Error in GetFolderPath: {ex.Message}");
             }
-            Thread.Sleep(1000);
         }
         public static void GetExtrasStates()
         {
@@ -594,12 +584,15 @@ namespace Astro.Classes
         {
             try
             {
+                AstroLogs.Log($"Attempting to launch Steam game with ID: {game}");
                 Process.Start("steam://rungameid/" + game);
+                AstroLogs.Log("Steam game launched successfully.");
             }
             catch (Exception ex)
             {
                 SetColor(Color.DarkRed);
                 ConsoleAnimation($"Error Starting Steam game: {ex.Message}");
+                AstroLogs.Log($"Error starting Steam game: {ex.Message}");
             }
         }
         public static void CloseSteamGame(int appId)
@@ -608,11 +601,9 @@ namespace Astro.Classes
 
             try
             {
+                AstroLogs.Log($"Attempting to close Steam game with AppID: {appId}");
                 // Open the Steam game's details page
                 Process.Start(steamUrl);
-
-                // Wait for a moment to ensure the Steam client has enough time to open the game's details
-                System.Threading.Thread.Sleep(1000);
 
                 // Find the process associated with the game by its name
                 Process[] processes = Process.GetProcessesByName("Lethal Company");
@@ -622,13 +613,16 @@ namespace Astro.Classes
                     process.CloseMainWindow();
                     process.WaitForExit();
 
+                    AstroLogs.Log($"Closed process: {process.ProcessName}");
                     // I could use Process.Kill but then data would not save properly.
                 }
+                AstroLogs.Log("All processes associated with the game have been closed.");
             }
             catch (Exception ex)
             {
                 SetColor(Color.DarkRed);
                 ConsoleAnimation($"Error closing Steam game: {ex.Message}");
+                AstroLogs.Log($"Error closing Steam game: {ex.Message}");
             }
         }
         public static void ReplaceIniValue(string filePath, string section, string key, string newValue)
@@ -671,39 +665,162 @@ namespace Astro.Classes
         // Checks
         public static async Task CheckDependencies()
         {
-            if (!AstroFileSystem.DirectoryExists("MenuMusic"))
+            try
             {
-                Directory.CreateDirectory("MenuMusic");
-            }
-            var dependencyMissing = false;
-            using (WebClient client = server)
-            {
-                foreach (var dependency in dependencies)
+                AstroLogs.Log("Checking for missing dependencies.");
+
+                if (!AstroFileSystem.DirectoryExists("MenuMusic"))
                 {
-                    if (!AstroFileSystem.FileExists(dependency.Key))
+                    Directory.CreateDirectory("MenuMusic");
+                    AstroLogs.Log("MenuMusic directory created.");
+                }
+
+                var dependencyMissing = false;
+                using (WebClient client = server)
+                {
+                    foreach (var dependency in dependencies)
                     {
-                        dependencyMissing = true;
-                        Console.WriteLine($"Downloading Missing Dependency [{dependency.Key}]...");
-                        try
+                        if (!AstroFileSystem.FileExists(dependency.Key))
                         {
-                            client.DownloadFile(dependency.Value, dependency.Key);
-                        }
-                        catch (Exception ex)
-                        {
-                            SetColor(Color.DarkRed);
-                            Console.WriteLine($"Error downloading dependency, Please report to Astro: {ex.InnerException}");
-                            Thread.Sleep(10000);
-                            Environment.Exit(0);
+                            dependencyMissing = true;
+                            Console.WriteLine($"Downloading Missing Dependency [{dependency.Key}]...");
+                            AstroLogs.Log($"Downloading missing dependency: {dependency.Key}");
+
+                            try
+                            {
+                                await client.DownloadFileTaskAsync(dependency.Value, dependency.Key);
+                                AstroLogs.Log($"Successfully downloaded dependency: {dependency.Key}");
+                            }
+                            catch (Exception ex)
+                            {
+                                SetColor(Color.DarkRed);
+                                Console.WriteLine($"Error downloading dependency, Please report to Astro: {ex.InnerException}");
+                                AstroLogs.Log($"Error downloading dependency {dependency.Key}: {ex.InnerException}");
+
+                                Thread.Sleep(10000);
+                                Environment.Exit(0);
+                            }
                         }
                     }
                 }
+
+                if (dependencyMissing)
+                {
+                    Console.WriteLine("All dependencies downloaded successfully.");
+                    AstroLogs.Log("All missing dependencies downloaded successfully.");
+
+                    Thread.Sleep(2000);
+                    Process.Start(Process.GetCurrentProcess().MainModule.FileName);
+                    AstroLogs.Log("Restarting process due to new dependencies.");
+
+                    Process.GetCurrentProcess().Kill();
+                }
+                else
+                {
+                    AstroLogs.Log("No missing dependencies found.");
+                }
             }
-            if (dependencyMissing == true)
+            catch (Exception ex)
             {
-                Console.WriteLine("All dependencies downloaded successfully.");
-                Thread.Sleep(2000);
-                Process.Start(Process.GetCurrentProcess().MainModule.FileName);
-                Process.GetCurrentProcess().Kill();
+                AstroLogs.Log($"Error in CheckDependencies: {ex.Message}");
+            }
+        }
+        public static async Task CheckForUpdates()
+        {
+            try
+            {
+                AstroLogs.Log("Starting update check.");
+                Colorful.Console.WriteWithGradient(@"
+ **     ** *******  *******       **     ********** ******** *******  
+/**    /**/**////**/**////**     ****   /////**/// /**///// /**////** 
+/**    /**/**   /**/**    /**   **//**      /**    /**      /**   /** 
+/**    /**/******* /**    /**  **  //**     /**    /******* /*******  
+/**    /**/**////  /**    /** **********    /**    /**////  /**///**  
+/**    /**/**      /**    ** /**//////**    /**    /**      /**  //** 
+//******* /**      /*******  /**     /**    /**    /********/**   //**
+ ///////  //       ///////   //      //     //     //////// //     // 
+", Color.BlueViolet, Color.HotPink, 5);
+                Console.SetWindowSize(100, 30);
+                Console.SetBufferSize(100, 30);
+                ConsoleAnimation($"Current Version: {currentVersion}");
+                AstroLogs.Log($"Current version: {currentVersion}");
+
+                ConsoleAnimation("Checking for updates...");
+                ConsoleAnimation($"Latest Version: {AstroServer.latestVersion}");
+                AstroLogs.Log($"Latest available version: {AstroServer.latestVersion}");
+
+                if (currentVersion < AstroServer.latestVersion)
+                {
+                    AstroLogs.Log("Update available.");
+
+                    if (currentConfig.autoUpdate == true)
+                    {
+                        ConsoleAnimation("Updating automatically...");
+                        AstroLogs.Log("Automatic update initiated.");
+                        await Task.Delay(1000);
+                        ConsoleMain.ForceAppUpdate();
+                    }
+                    else
+                    {
+                        ConsoleAnimation("Update Available! Would you like to update now?");
+                        GenerateOption(new MenuOption()
+                        {
+                            option = "Yes",
+                            identity = "0",
+                            matchMenu = false,
+                            newLine = true
+                        });
+                        GenerateOption(new MenuOption()
+                        {
+                            option = "No",
+                            identity = "1",
+                            matchMenu = false,
+                            newLine = true
+                        });
+
+                        var currOption = Console.ReadLine();
+                        Console.WriteLine();
+                        AstroLogs.Log($"User selected option: {currOption}");
+
+                        switch (currOption)
+                        {
+                            case "0":
+                                ConsoleAnimation("Updating..");
+                                AstroLogs.Log("User initiated update.");
+                                await Task.Delay(1000);
+                                ConsoleMain.ForceAppUpdate();
+                                break;
+                            case "1":
+                                ConsoleAnimation("Update Skipped.");
+                                AstroLogs.Log("User skipped update.");
+                                await Task.Delay(1000);
+                                break;
+                            default:
+                                SetColor(Color.DarkRed);
+                                ConsoleAnimation("Invalid Option. Please try again.");
+                                AstroLogs.Log("User entered invalid option for update.");
+                                break;
+                        }
+                    }
+                }
+                else if (currentVersion > AstroServer.latestVersion)
+                {
+                    ConsoleAnimation("Time Traveler. You have a newer version.");
+                    AstroLogs.Log("Current version is newer than the latest version.");
+                    await Task.Delay(2000);
+                }
+                else
+                {
+                    ConsoleAnimation("No Updates Available!");
+                    AstroLogs.Log("No updates available.");
+                    await Task.Delay(2000);
+                }
+
+                Colorful.Console.ReplaceAllColorsWithDefaults();
+            }
+            catch (Exception ex)
+            {
+                AstroLogs.Log($"Error in CheckForUpdates: {ex.Message}");
             }
         }
         public static void CheckCurrentStates()
@@ -735,45 +852,61 @@ namespace Astro.Classes
         }
         public static void CheckSteamInstallData()
         {
-            Colorful.Console.Clear();
-
-            var allLibraryFolders = GetAllSteamLibraryFolders();
-            foreach (var steamAppsFolder in allLibraryFolders)
+            try
             {
-                string[] appManifestFiles = Directory.GetFiles(steamAppsFolder, "appmanifest_*.acf");
+                AstroLogs.Log("Starting to check Steam install data.");
 
-                foreach (var file in appManifestFiles)
+                Colorful.Console.Clear();
+
+                var allLibraryFolders = GetAllSteamLibraryFolders();
+                AstroLogs.Log($"Found {allLibraryFolders.Count} Steam library folders.");
+
+                foreach (var steamAppsFolder in allLibraryFolders)
                 {
-                    string[] lines = File.ReadAllLines(file);
-                    string appName = "";
-                    string installDir = "";
-                    string fullPath = "";
+                    string[] appManifestFiles = Directory.GetFiles(steamAppsFolder, "appmanifest_*.acf");
+                    AstroLogs.Log($"Found {appManifestFiles.Length} app manifest files in {steamAppsFolder}.");
 
-                    foreach (var line in lines)
+                    foreach (var file in appManifestFiles)
                     {
-                        if (line.Contains("\"name\""))
-                            appName = ExtractValue(line);
-                        if (line.Contains("\"installdir\""))
-                            installDir = ExtractValue(line);
-                    }
+                        string[] lines = File.ReadAllLines(file);
+                        string appName = "";
+                        string installDir = "";
+                        string fullPath = "";
 
-                    if (!string.IsNullOrEmpty(installDir))
-                    {
-                        fullPath = Path.Combine(steamAppsFolder, "common", installDir);
-                        Colorful.StyleSheet styleSheet = new Colorful.StyleSheet(Color.Gray);
-                        styleSheet.AddStyle($"{appName}[a-z]*", Color.BlueViolet);
+                        foreach (var line in lines)
+                        {
+                            if (line.Contains("\"name\""))
+                                appName = ExtractValue(line);
+                            if (line.Contains("\"installdir\""))
+                                installDir = ExtractValue(line);
+                        }
 
-                        Colorful.Console.WriteLineStyled($"Found Game: {appName}", styleSheet);
-                    }
+                        if (!string.IsNullOrEmpty(installDir))
+                        {
+                            fullPath = Path.Combine(steamAppsFolder, "common", installDir);
+                            Colorful.StyleSheet styleSheet = new Colorful.StyleSheet(Color.Gray);
+                            styleSheet.AddStyle($"{appName}[a-z]*", Color.BlueViolet);
 
-                    if (appName == "Lethal Company")
-                    {
-                        lethalCompanyPath = fullPath; // Make sure lethalCompanyPath is declared somewhere
+                            Colorful.Console.WriteLineStyled($"Found Game: {appName}", styleSheet);
+                            AstroLogs.Log($"Found game: {appName} at {fullPath}");
+                        }
+
+                        if (appName == "Lethal Company")
+                        {
+                            lethalCompanyPath = fullPath; // Make sure lethalCompanyPath is declared somewhere
+                            AstroLogs.Log("Lethal Company path set.");
+                        }
                     }
                 }
+
+                Thread.Sleep(500);
             }
-            Thread.Sleep(500);
+            catch (Exception ex)
+            {
+                AstroLogs.Log($"Error in CheckSteamInstallData: {ex.Message}");
+            }
         }
+
         public static void CheckLethalCompany()
         {
             Process[] lc = Process.GetProcessesByName("Lethal Company");
@@ -787,82 +920,9 @@ namespace Astro.Classes
                 CheckLethalCompany();
             }
         }
-        public static async Task CheckForUpdates()
-        {
-            Colorful.Console.WriteWithGradient(@"
- **     ** *******  *******       **     ********** ******** *******  
-/**    /**/**////**/**////**     ****   /////**/// /**///// /**////** 
-/**    /**/**   /**/**    /**   **//**      /**    /**      /**   /** 
-/**    /**/******* /**    /**  **  //**     /**    /******* /*******  
-/**    /**/**////  /**    /** **********    /**    /**////  /**///**  
-/**    /**/**      /**    ** /**//////**    /**    /**      /**  //** 
-//******* /**      /*******  /**     /**    /**    /********/**   //**
- ///////  //       ///////   //      //     //     //////// //     // 
-", Color.BlueViolet, Color.HotPink, 5);
-            Console.SetWindowSize(100, 30);
-            Console.SetBufferSize(100, 30);
-            ConsoleAnimation($"Current Version: {currentVersion}");
-            ConsoleAnimation("Checking for updates...");
-            ConsoleAnimation($"Latest Version: {AstroServer.latestVersion}");
-            if (currentVersion < AstroServer.latestVersion)
-            {
-                if (currentConfig.autoUpdate == true)
-                {
-                    ConsoleAnimation("Updating..");
-                    Thread.Sleep(1000);
-                    ConsoleMain.ForceAppUpdate();
-                }
-                else
-                {
-                    ConsoleAnimation("Update Available! Would you like to update now?");
-                    GenerateOption(new MenuOption()
-                    {
-                        option = "Yes",
-                        identity = "0",
-                        matchMenu = false,
-                        newLine = true
-                    });
-                    GenerateOption(new MenuOption()
-                    {
-                        option = "No",
-                        identity = "1",
-                        matchMenu = false,
-                        newLine = true
-                    });
-                    var currOption = Console.ReadLine(); Console.WriteLine();
-                    switch (currOption)
-                    {
-                        case "0":
-                            ConsoleAnimation("Updating..");
-                            Thread.Sleep(1000);
-                            ConsoleMain.ForceAppUpdate();
-                            break;
-                        case "1":
-                            ConsoleAnimation("Update Skipped.");
-                            Thread.Sleep(1000);
-                            break;
-                        default:
-                            SetColor(Color.DarkRed);
-                            ConsoleAnimation("Invalid Option. Please try again.");
-                            break;
-                    }
-                }
-            }
-            else if (currentVersion > AstroServer.latestVersion)
-            {
-                ConsoleAnimation("Time Traveler. You have a newer version.");
-                Thread.Sleep(2000);
-            }
-            else
-            {
-                ConsoleAnimation("No Updates Available!");
-                Thread.Sleep(2000);
-            }
-            Colorful.Console.ReplaceAllColorsWithDefaults();
-        }
         public static bool CheckForExistingMods()
         {
-            if (AstroFileSystem.DirectoryExists(bepInExPath) || AstroFileSystem.DirectoryExists(lethalCompanyPath + "\\MLLoader") || AstroFileSystem.DirectoryExists($"{lethalCompanyPath}\\winhttp.dll") || AstroFileSystem.DirectoryExists($"{lethalCompanyPath}\\doorstop_config.ini"))
+            if (AstroFileSystem.DirectoryExists(bepInExPath) || AstroFileSystem.DirectoryExists($"{lethalCompanyPath}\\winhttp.dll") || AstroFileSystem.DirectoryExists($"{lethalCompanyPath}\\doorstop_config.ini"))
             {
                 return true;
             }

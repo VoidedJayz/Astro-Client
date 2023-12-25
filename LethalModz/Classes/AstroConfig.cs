@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using LethalModz.Classes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,5 +27,29 @@ namespace Astro.Classes
             }
             return new AstroConfig();
         }
+
+        public static async Task GetConfig()
+        {
+            try
+            {
+                AstroLogs.Log("Attempting to load configuration.");
+
+                AstroUtils.currentConfig = Load();
+
+                if (AstroUtils.currentConfig != null)
+                {
+                    AstroLogs.Log("Configuration loaded successfully.");
+                }
+                else
+                {
+                    AstroLogs.Log("Failed to load configuration: currentConfig is null.");
+                }
+            }
+            catch (Exception ex)
+            {
+                AstroLogs.Log($"Error in GetConfig: {ex.Message}");
+            }
+        }
+
     }
 }

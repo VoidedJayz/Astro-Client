@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LethalModz.Classes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -37,24 +38,49 @@ namespace Astro.Classes
 
         public static async Task Enable()
         {
-            Console.Title = $"Astro Boyz {AstroUtils.currentVersion}";
-            Console.CursorVisible = false;
-            Console.SetWindowSize(100, 30);
-            IntPtr consoleWindow = GetConsoleWindow();
+            try
+            {
+                Console.Title = $"Astro Boyz {AstroUtils.currentVersion}";
+                AstroLogs.Log("Console title set.");
 
-            // Remove maximize button and resizing
-            int windowStyle = GetWindowLong(consoleWindow, GWL_STYLE);
+                Console.CursorVisible = false;
+                AstroLogs.Log("Console cursor visibility set to false.");
 
-            // Remove maximize box and sizing border
-            windowStyle &= ~WS_MAXIMIZEBOX;
-            windowStyle &= ~WS_SIZEBOX;
+                Console.SetWindowSize(100, 30);
+                AstroLogs.Log("Console window size set.");
 
-            // Set the new style
-            SetWindowLong(consoleWindow, GWL_STYLE, windowStyle);
+                IntPtr consoleWindow = GetConsoleWindow();
+                if (consoleWindow == IntPtr.Zero)
+                {
+                    AstroLogs.Log("Failed to get console window handle.");
+                }
+                else
+                {
+                    AstroLogs.Log("Console window handle obtained.");
 
-            // Hide scrollbars
-            ShowScrollBar(consoleWindow, SB_BOTH, false);
+                    // Remove maximize button and resizing
+                    int windowStyle = GetWindowLong(consoleWindow, GWL_STYLE);
+                    AstroLogs.Log("Original window style retrieved.");
 
+                    // Remove maximize box and sizing border
+                    windowStyle &= ~WS_MAXIMIZEBOX;
+                    windowStyle &= ~WS_SIZEBOX;
+                    AstroLogs.Log("Maximize box and sizing border removed from window style.");
+
+                    // Set the new style
+                    SetWindowLong(consoleWindow, GWL_STYLE, windowStyle);
+                    AstroLogs.Log("New window style set.");
+
+                    // Hide scrollbars
+                    ShowScrollBar(consoleWindow, SB_BOTH, false);
+                    AstroLogs.Log("Scrollbars hidden.");
+                }
+            }
+            catch (Exception ex)
+            {
+                AstroLogs.Log($"Error in Enable method: {ex.Message}");
+            }
         }
+
     }
 }
