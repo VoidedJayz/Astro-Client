@@ -17,10 +17,10 @@ namespace AstroClient.Systems
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error appending to file: {ex.Message}");
                 LogSystem.ReportError($"Error appending to file: {ex.Message}");
             }
         }
+
         public static void WriteAllText(string filePath, string content)
         {
             try
@@ -29,10 +29,10 @@ namespace AstroClient.Systems
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error writing to file: {ex.Message}");
                 LogSystem.ReportError($"Error writing to file: {ex.Message}");
             }
         }
+
         public static string ReadAllText(string filePath)
         {
             try
@@ -44,11 +44,83 @@ namespace AstroClient.Systems
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error reading file: {ex.Message}");
                 LogSystem.ReportError($"Error reading file: {ex.Message}");
                 return null;
             }
         }
+
+        public static string CreateUniqueFolderName(string baseFolderName, string directoryPath)
+        {
+            string folderName = $"{baseFolderName}{DateTime.Now:yyyy-MM-dd}";
+            string uniqueFolderName = folderName;
+            int counter = 1;
+
+            while (DirectoryExists(Path.Combine(directoryPath, uniqueFolderName)))
+            {
+                uniqueFolderName = $"{folderName}_{counter++}";
+            }
+
+            string folderPath = Path.Combine(directoryPath, uniqueFolderName);
+            CreateDirectory(folderPath);
+            return folderPath;
+        }
+
+        public static void WriteAllBytes(string filePath, byte[] bytes)
+        {
+            try
+            {
+                using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    fs.Write(bytes, 0, bytes.Length);
+                }
+                LogSystem.Log($"Bytes written to file: {bytes.Length} bytes to {filePath}");
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"Error writing bytes to file '{filePath}': {ex.Message}");
+            }
+        }
+
+        public static void CopyFile(string sourceFilePath, string destinationFilePath)
+        {
+            try
+            {
+                File.Copy(sourceFilePath, destinationFilePath, true);
+            }
+            catch (IOException ioEx)
+            {
+                LogSystem.ReportError($"An IO exception occurred: {ioEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"An exception occurred: {ex.Message}");
+            }
+        }
+
+        public static void CopyDirectory(string sourceDirPath, string destinationDirPath)
+        {
+            try
+            {
+                foreach (string dirPath in Directory.GetDirectories(sourceDirPath, "*", SearchOption.AllDirectories))
+                {
+                    Directory.CreateDirectory(dirPath.Replace(sourceDirPath, destinationDirPath));
+                }
+
+                foreach (string filePath in Directory.GetFiles(sourceDirPath, "*.*", SearchOption.AllDirectories))
+                {
+                    File.Copy(filePath, filePath.Replace(sourceDirPath, destinationDirPath), true);
+                }
+            }
+            catch (IOException ioEx)
+            {
+                LogSystem.ReportError($"An IO exception occurred: {ioEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"An exception occurred: {ex.Message}");
+            }
+        }
+
         public static List<string> GetDirectories(string path)
         {
             try
@@ -61,11 +133,11 @@ namespace AstroClient.Systems
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error getting directories: {ex.Message}");
                 LogSystem.ReportError($"Error getting directories: {ex.Message}");
-                return new List<string>(); // Return an empty list in case of an error
+                return new List<string>();
             }
         }
+
         public static List<string> GetFiles(string directoryPath, string searchPattern = "*.*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
         {
             try
@@ -78,11 +150,11 @@ namespace AstroClient.Systems
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error getting files: {ex.Message}");
                 LogSystem.ReportError($"Error getting files: {ex.Message}");
-                return new List<string>(); // Return an empty list in case of an error
+                return new List<string>();
             }
         }
+
         public static void CreateDirectory(string path)
         {
             if (!Directory.Exists(path))
@@ -105,80 +177,82 @@ namespace AstroClient.Systems
                 }
             }
         }
+
         public static void MoveFile(string sourcePath, string destinationPath)
         {
             try
             {
-                if (!File.Exists(sourcePath))
+                if (!FileExists(sourcePath))
                     throw new FileNotFoundException("Source file does not exist.", sourcePath);
 
                 File.Move(sourcePath, destinationPath);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error moving file: {ex.Message}");
                 LogSystem.ReportError($"Error moving file: {ex.Message}");
             }
         }
+
         public static void DeleteFile(string filePath)
         {
             try
             {
-                if (!File.Exists(filePath))
+                if (!FileExists(filePath))
                     throw new FileNotFoundException("File does not exist.", filePath);
 
                 File.Delete(filePath);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting file: {ex.Message}");
                 LogSystem.ReportError($"Error deleting file: {ex.Message}");
             }
         }
+
         public static void MoveDirectory(string sourcePath, string destinationPath)
         {
             try
             {
-                if (!Directory.Exists(sourcePath))
+                if (!DirectoryExists(sourcePath))
                     throw new DirectoryNotFoundException("Source directory does not exist.");
 
                 Directory.Move(sourcePath, destinationPath);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error moving directory: {ex.Message}");
                 LogSystem.ReportError($"Error moving directory: {ex.Message}");
             }
         }
+
         public static void DeleteDirectory(string directoryPath)
         {
             try
             {
-                if (!Directory.Exists(directoryPath))
+                if (!DirectoryExists(directoryPath))
                     throw new DirectoryNotFoundException("Directory does not exist.");
 
                 Directory.Delete(directoryPath, true);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting directory: {ex.Message}");
                 LogSystem.ReportError($"Error deleting directory: {ex.Message}");
             }
         }
+
         public static bool FileExists(string filePath)
         {
             return File.Exists(filePath);
         }
+
         public static bool DirectoryExists(string directoryPath)
         {
             return Directory.Exists(directoryPath);
         }
+
         public static void CreateFile(string filePath)
         {
             try
             {
-
-                if (File.Exists(filePath))
+                if (FileExists(filePath))
                 {
                     LogSystem.Log($"File already exists: {filePath}");
                     return;
@@ -194,15 +268,12 @@ namespace AstroClient.Systems
                 LogSystem.ReportError($"Error creating file: {ex.Message}");
             }
         }
+
         public static void ReplaceIniValue(string filePath, string section, string key, string newValue)
         {
-            // Read all lines from the file
             List<string> lines = new List<string>(File.ReadAllLines(filePath));
-
-            // Create a regular expression pattern to match the key within the specified section
             string pattern = $@"^\s*{key}\s*=\s*(.*)\s*$";
 
-            // Iterate through the lines and find the key within the specified section
             for (int i = 0; i < lines.Count; i++)
             {
                 if (lines[i].Trim() == $"[{section}]")
@@ -213,13 +284,11 @@ namespace AstroClient.Systems
 
                         if (match.Success)
                         {
-                            // Replace the old value with the new value
                             lines[j] = $"{key}={newValue}";
                             break;
                         }
                         else if (lines[j].StartsWith("["))
                         {
-                            // If a new section is encountered, break the inner loop
                             break;
                         }
                     }
@@ -227,7 +296,6 @@ namespace AstroClient.Systems
                 }
             }
 
-            // Write the modified lines back to the file
             File.WriteAllLines(filePath, lines);
         }
 

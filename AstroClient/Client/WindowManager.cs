@@ -33,7 +33,7 @@ namespace AstroClient.Client
         private const int WS_SIZEBOX = 0x40000;
         private const int SB_BOTH = 3;
 
-        public static async Task Start()
+        public static void Start()
         {
             try
             {
@@ -71,7 +71,9 @@ namespace AstroClient.Client
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in Enable method: {ex.Message}");
+                ConsoleSystem.SetColor(System.Drawing.Color.DarkRed);
+                ConsoleSystem.AnimatedText($"Error in WindowManager. Check logs for details.");
+                LogSystem.ReportError($"Error in Enable method: {ex}");
             }
         }
     }

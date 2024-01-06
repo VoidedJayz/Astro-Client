@@ -16,13 +16,20 @@ namespace AstroClient.Systems
         public static extern bool SetForegroundWindow(IntPtr hWnd);
         public static void AnimatedText(string input)
         {
-            var chars = input.ToCharArray();
-            foreach (var letter in chars)
+            if (ConfigSystem.loadedConfig.animatedText)
             {
-                Colorful.Console.Write(letter);
-                Thread.Sleep(10);
+                var chars = input.ToCharArray();
+                foreach (var letter in chars)
+                {
+                    Colorful.Console.Write(letter);
+                    Task.Delay(1).Wait();
+                }
+                Colorful.Console.WriteLine();
             }
-            Colorful.Console.WriteLine();
+            else
+            {
+                Console.Write(input + "\n");
+            }
         }
         public static void SetColor(Color color)
         {
@@ -30,7 +37,8 @@ namespace AstroClient.Systems
         }
         public static void CenterText(string text)
         {
-            Console.WriteLine(text.PadLeft((Console.WindowWidth / 2) + (text.Length / 2)).PadRight(Console.WindowWidth));
+            Console.SetCursorPosition(27, Console.CursorTop);
+            Console.WriteLine(text);
         }
 
         public static async Task KeepWindowSize()
@@ -43,9 +51,9 @@ namespace AstroClient.Systems
             }
         }
 
-        public static void GenerateOption(MenuOption options)
+        public static void GenerateOption(MenuOption options, int pos = 27)
         {
-            // lol
+            // variables
             var Option = options.option ?? "";
             var identity = options.identity ?? "";
             var color = Color.BlueViolet;
@@ -54,10 +62,11 @@ namespace AstroClient.Systems
             var warning = options.warning ?? "";
             var warningColor = Color.Gray;
 
-            // set cursor to console center
+
             var originalConsoleColor = Colorful.Console.ForegroundColor;
             if (matchMenu == true)
             {
+                Console.SetCursorPosition(pos, Console.CursorTop);
                 Console.Write("║");
             }
             SetColor(color);
@@ -72,8 +81,8 @@ namespace AstroClient.Systems
                 if (matchMenu == true)
                 {
                     var old = Console.CursorLeft;
-                    Colorful.Console.SetCursorPosition(45, Console.CursorTop);
-                    SetColor(Color.HotPink);
+                    Colorful.Console.SetCursorPosition(72, Console.CursorTop);
+                    SetColor(Color.DeepPink);
                     Colorful.Console.Write("║");
                     SetColor(Color.LightGray);
                     Colorful.Console.SetCursorPosition(old, Console.CursorTop);
@@ -87,8 +96,8 @@ namespace AstroClient.Systems
                 if (matchMenu == true)
                 {
                     var old = Console.CursorLeft;
-                    Colorful.Console.SetCursorPosition(45, Console.CursorTop);
-                    SetColor(Color.HotPink);
+                    Colorful.Console.SetCursorPosition(70, Console.CursorTop);
+                    SetColor(Color.DeepPink);
                     Colorful.Console.Write("║");
                     SetColor(Color.LightGray);
                     Colorful.Console.SetCursorPosition(old, Console.CursorTop);
@@ -112,7 +121,7 @@ namespace AstroClient.Systems
           /**//////**       /**    /**    /**  //** //**     **         //****    *   /*
           /**     /** ********     /**    /**   //** //*******           //**    / **** 
           //      // ////////      //     //     //   ///////             //      ////  
-", Color.BlueViolet, Color.HotPink, 5);
+", Color.BlueViolet, Color.DeepPink, 5);
         }
         public static void UpdateArt()
         {
@@ -127,7 +136,7 @@ namespace AstroClient.Systems
 /**    /**/**      /**    ** /**//////**    /**    /**      /**  //** 
 //******* /**      /*******  /**     /**    /**    /********/**   //**
  ///////  //       ///////   //      //     //     //////// //     // 
-", Color.BlueViolet, Color.HotPink, 5);
+", Color.BlueViolet, Color.DeepPink, 5);
         }
     }
 }

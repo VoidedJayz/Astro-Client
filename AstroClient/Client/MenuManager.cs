@@ -1,4 +1,5 @@
 ﻿using AstroClient.Systems;
+using NAudio.SoundFont;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static AstroClient.Objects;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AstroClient.Client
 {
@@ -16,15 +18,16 @@ namespace AstroClient.Client
         public static string astroState;
         public static string richState;
         public static string retroState;
-        public static async Task Start()
+        public static bool musicStarted = false;
+        public static void Start()
         {
             DiscordManager.UpdatePresence("idle", "Main Menu");
             Console.Clear();
             GenerateMenu();
-            await MenuInput();
+            MenuInput();
             Start();
         }
-        public static async Task MenuInput()
+        public static void MenuInput()
         {
             var currOption = Console.ReadLine(); Console.WriteLine();
             if (currOption != null)
@@ -69,17 +72,17 @@ namespace AstroClient.Client
                             case "0":
                                 ConsoleSystem.SetColor(Color.Cyan);
                                 ConsoleSystem.AnimatedText("Starting...");
-                                SteamSystem.LaunchSteamGame(1966720);
+                                SteamManager.LaunchSteamGame(1966720);
                                 DiscordManager.UpdatePresence("cog", "Starting Game");
-                                Thread.Sleep(1000);
+                                Task.Delay(1000).Wait();
                                 Console.Clear();
                                 break;
                             case "1":
                                 ConsoleSystem.SetColor(Color.Cyan);
                                 ConsoleSystem.AnimatedText("Closing...");
-                                SteamSystem.CloseSteamGame(1966720);
+                                SteamManager.CloseSteamGame(1966720);
                                 DiscordManager.UpdatePresence("idle", "In Menus");
-                                Thread.Sleep(1000);
+                                Task.Delay(1000).Wait();
                                 Console.Clear();
                                 break;
                             default:
@@ -87,7 +90,7 @@ namespace AstroClient.Client
                                 ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
                                 break;
                         }
-                        Thread.Sleep(1000);
+                        Task.Delay(1000).Wait();
                         Console.Clear();
                         break;
                     case "5":
@@ -95,19 +98,24 @@ namespace AstroClient.Client
                         ConsoleSystem.AnimatedText("Opening...");
                         DiscordManager.UpdatePresence("cog", "Opening Folder");
                         Process.Start("explorer.exe", $@"{Program.lethalCompanyPath}");
-                        Thread.Sleep(1000);
+                        Task.Delay(1000).Wait();
                         Console.Clear();
                         break;
                     case "6":
                         ConsoleSystem.SetColor(Color.Cyan);
+                        ConsoleSystem.AnimatedText("Backing Up Mods...");
+                        ModManager.BackupMods();
+                        break;
+                    case "7":
+                        ConsoleSystem.SetColor(Color.Cyan);
                         DiscordManager.UpdatePresence("cog", "Updating App");
                         UpdateManager.DownloadAppUpdate();
                         break;
-                    case "7":
+                    case "8":
                         DiscordManager.UpdatePresence("cog", "Viewing Changelog");
                         ChangeLog();
                         break;
-                    case "8":
+                    case "9":
                         SettingsMenu();
                         break;
                     default:
@@ -124,14 +132,15 @@ namespace AstroClient.Client
             try
             {
                 ConsoleSystem.AppArt();
-                Console.SetWindowSize(100, 30);
-                Console.SetBufferSize(100, 30);
-                ConsoleSystem.SetColor(Color.HotPink);
-                Console.WriteLine($"                                                                                 {UpdateManager.Version}");
                 ConsoleSystem.SetColor(Color.BlueViolet);
-                ConsoleSystem.AnimatedText("\nPlease type the number of the option you would like.\n");
-                ConsoleSystem.SetColor(Color.HotPink);
-                Console.WriteLine("╔════ Mods ══════════════════════════════════╗");
+                // Center the version information
+                string versionInfo = UpdateManager.Version.ToString().PadLeft(Console.WindowWidth / 2 + UpdateManager.Version.ToString().Length / 2);
+                Console.WriteLine(versionInfo); ConsoleSystem.SetColor(Color.BlueViolet);
+                string msg = "Please type the number of the option you would like.\n";
+                Console.WriteLine();
+                ConsoleSystem.AnimatedText(msg.PadLeft(Console.WindowWidth / 2 + msg.Length / 2));
+                ConsoleSystem.SetColor(Color.DeepPink);
+                ConsoleSystem.CenterText("╔════ Mods ══════════════════════════════════╗");
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
                     option = "Install Mods",
@@ -156,8 +165,8 @@ namespace AstroClient.Client
                     matchMenu = true,
                     newLine = true
                 });
-                Console.WriteLine("╚════════════════════════════════════════════╝");
-                Console.WriteLine("╔════ Util ══════════════════════════════════╗");
+                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝");
+                ConsoleSystem.CenterText("╔════ Util ══════════════════════════════════╗");
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
                     option = "Start / Stop Lethal Company",
@@ -174,19 +183,19 @@ namespace AstroClient.Client
                     matchMenu = true,
                     newLine = true
                 });
-                Console.WriteLine("╚════════════════════════════════════════════╝");
-                Console.WriteLine("╔════ App ═══════════════════════════════════╗");
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
-                    option = "Force Update Astro Boyz",
+                    option = "Backup Old Mods",
                     identity = "6",
                     color = Color.BlueViolet,
                     matchMenu = true,
                     newLine = true
                 });
+                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝");
+                ConsoleSystem.CenterText("╔════ App ═══════════════════════════════════╗");
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
-                    option = "View Change Log",
+                    option = "Force Update Astro Boyz",
                     identity = "7",
                     color = Color.BlueViolet,
                     matchMenu = true,
@@ -194,17 +203,25 @@ namespace AstroClient.Client
                 });
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
-                    option = "Settings",
+                    option = "View Change Log",
                     identity = "8",
                     color = Color.BlueViolet,
                     matchMenu = true,
                     newLine = true
                 });
-                Console.WriteLine("╚════════════════════════════════════════════╝\n");
+                ConsoleSystem.GenerateOption(new MenuOption()
+                {
+                    option = "Settings",
+                    identity = "9",
+                    color = Color.BlueViolet,
+                    matchMenu = true,
+                    newLine = true
+                });
+                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n");
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"An error occurred in GenerateMenu: {ex.Message}");
+                LogSystem.ReportError($"An error occurred in GenerateMenu: {ex}");
                 ConsoleSystem.AnimatedText("An error occurred. Please check the log file for details.");
             }
             finally
@@ -233,26 +250,51 @@ namespace AstroClient.Client
             {
                 GetExtrasStates();
                 ConsoleSystem.AppArt();
-                ConsoleSystem.SetColor(Color.HotPink);
-                ConsoleSystem.AnimatedText($"                                                                                 {UpdateManager.Version}");
-                Console.WriteLine("\n╔════════════════════════════════════════════╗");
+                ConsoleSystem.SetColor(Color.DeepPink);
+                Console.WriteLine();
+                ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
 
-                string[] options = { "Astro Menu", "Brutal Company", "Retro Shading", "Back" };
-                string[] warnings = { " (CONSIDERED CHEATS)", " (HOST ONLY)", "", "" };
-                for (int i = 0; i < options.Length; i++)
+                ConsoleSystem.GenerateOption(new MenuOption()
                 {
-                    ConsoleSystem.GenerateOption(new MenuOption()
-                    {
-                        option = options[i],
-                        identity = i.ToString(),
-                        color = Color.BlueViolet,
-                        matchMenu = true,
-                        newLine = true,
-                        warning = warnings[i]
-                    });
-                    LogSystem.Log($"Menu option generated for {options[i]}");
-                }
-                Console.WriteLine("╚════════════════════════════════════════════╝\n\n");
+                    option = $"Astro Menu",
+                    identity = "0",
+                    color = Color.BlueViolet,
+                    matchMenu = true,
+                    newLine = true
+                });
+                ConsoleSystem.GenerateOption(new MenuOption()
+                {
+                    option = $"Brutal Company",
+                    identity = "1",
+                    color = Color.BlueViolet,
+                    matchMenu = true,
+                    newLine = true
+                });
+                ConsoleSystem.GenerateOption(new MenuOption()
+                {
+                    option = $"Retro Shading",
+                    identity = "2",
+                    color = Color.BlueViolet,
+                    matchMenu = true,
+                    newLine = true
+                });
+                ConsoleSystem.GenerateOption(new MenuOption()
+                {
+                    option = $"Saves Manager",
+                    identity = "3",
+                    color = Color.BlueViolet,
+                    matchMenu = true,
+                    newLine = true
+                });
+                ConsoleSystem.GenerateOption(new MenuOption()
+                {
+                    option = $"Back",
+                    identity = "4",
+                    color = Color.BlueViolet,
+                    matchMenu = true,
+                    newLine = true
+                });
+                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n\n");
 
                 var currOption = Console.ReadLine();
                 Console.WriteLine("");
@@ -260,7 +302,7 @@ namespace AstroClient.Client
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"An error occurred in ExtrasMenu: {ex.Message}");
+                LogSystem.ReportError($"An error occurred in ExtrasMenu: {ex}");
                 ConsoleSystem.AnimatedText("An error occurred. Please check the log file for details.");
             }
             finally
@@ -281,13 +323,16 @@ namespace AstroClient.Client
                         ToggleFeature("Retro Shading", ModManager.RetroShading, "Install", "Remove");
                         break;
                     case "3":
+                        SavesMenu();
+                        break;
+                    case "4":
                         LogSystem.Log("Returning to Main Menu");
                         break;
                     default:
                         LogSystem.Log("Invalid Option Selected in Extras Menu");
                         ConsoleSystem.SetColor(Color.DarkRed);
                         ConsoleSystem.AnimatedText("Invalid Option.");
-                        Thread.Sleep(2000);
+                        Task.Delay(2000).Wait();
                         break;
                 }
                 void ToggleFeature(string featureName, Action<bool> toggleAction, string enableOption = "Enable", string disableOption = "Disable")
@@ -316,8 +361,285 @@ namespace AstroClient.Client
                             ConsoleSystem.AnimatedText("Invalid Option.");
                             break;
                     }
-                    Thread.Sleep(2000);
+                    Task.Delay(2000).Wait();
                 }
+            }
+        }
+        public static void SavesMenu()
+        {
+            LogSystem.Log("SavesMenu Function Started");
+            ConsoleSystem.AppArt();
+            ConsoleSystem.SetColor(Color.DeepPink);
+            Console.WriteLine();
+            ConsoleSystem.CenterText("Pick a save file.");
+            ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Save 1",
+                identity = "1",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Save 2",
+                identity = "2",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Save 3",
+                identity = "3",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Back",
+                identity = "4",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n\n");
+            var currOption = Console.ReadLine();
+            Console.WriteLine();
+            LogSystem.Log($"User selected option {currOption}");
+            switch (currOption)
+            {
+                case "1":
+                    SavePrompt();
+                    break;
+                case "2":
+                    SavePrompt();
+                    break;
+                case "3":
+                    SavePrompt();
+                    break;
+                case "4":
+                    break;
+                default:
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("Invalid Option.");
+                    break;
+            }
+            void SavePrompt()
+            {
+                ConsoleSystem.AnimatedText("Would you like to modify or export this save?");
+                ConsoleSystem.GenerateOption(new MenuOption() { option = "Modify", identity = "0", matchMenu = false, newLine = true });
+                ConsoleSystem.GenerateOption(new MenuOption() { option = "Export", identity = "1", matchMenu = false, newLine = true });
+                ConsoleSystem.GenerateOption(new MenuOption() { option = "Import", identity = "2", matchMenu = false, newLine = true });
+                ConsoleSystem.GenerateOption(new MenuOption() { option = "Delete", identity = "3", matchMenu = false, newLine = true });
+                ConsoleSystem.GenerateOption(new MenuOption() { option = "Back", identity = "4", matchMenu = false, newLine = true });
+                var currOption2 = Console.ReadLine();
+                Console.WriteLine();
+                LogSystem.Log($"User selected option {currOption2}");
+                switch (currOption2)
+                {
+                    case "0":
+                        GenerateSaveMenu($"Save {currOption}");
+                        break;
+                    case "1":
+                        SaveManager.ExportSave($"Save {currOption}");
+                        ConsoleSystem.AnimatedText("Save Exported! You can find it in your downloads. To load this save in game,");
+                        ConsoleSystem.AnimatedText("Simply replace the save file in the saves folder with this one.");
+                        ConsoleSystem.AnimatedText("Alternatively, you can import this save using the import option.");
+                        ConsoleSystem.AnimatedText("Your saves are located here: " + SaveManager.GameSavePath);
+                        ConsoleSystem.AnimatedText("Press any key to continue...");
+                        Console.ReadKey();
+                        break;
+                    case "2":
+                        ConsoleSystem.AnimatedText("Would you like to import a preset or a custom save?");
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Preset", identity = "0", matchMenu = false, newLine = true });
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Custom", identity = "1", matchMenu = false, newLine = true });
+                        var currOption3 = Console.ReadLine();
+                        Console.WriteLine();
+                        LogSystem.Log($"User selected option {currOption3}");
+                        switch (currOption3)
+                        {
+                            case "0":
+                                ConsoleSystem.AnimatedText("Enter the name of the preset you wish to import.");
+                                string availablePresets = string.Join(", ", SaveManager.presetLibrary.presets.Select(p => p.Name));
+                                ConsoleSystem.AnimatedText($"Current Available Preset(s): {availablePresets}");
+
+                                var currOption4 = Console.ReadLine();
+                                Console.WriteLine();
+                                LogSystem.Log($"User entered {currOption4}");
+                                if (currOption4 != null)
+                                {
+                                    SaveManager.presetLibrary.ImportPreset($"Save {currOption}", currOption4);
+                                    ConsoleSystem.AnimatedText("Save Imported! You can find it in your saves folder.");
+                                    ConsoleSystem.AnimatedText("Your saves are located here: " + SaveManager.GameSavePath);
+                                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                                    Console.ReadKey();
+                                }
+                                SavesMenu();
+                                break;
+                            case "1":
+                                ConsoleSystem.AnimatedText("Type the path to the save you wish to import, or press enter to browse.");
+                                ConsoleSystem.AnimatedText("Example: C:\\Users\\User\\Downloads\\SaveToImport");
+                                var currOption5 = Console.ReadLine();
+                                Console.WriteLine();
+                                LogSystem.Log($"User entered {currOption5}");
+                                if (currOption5 != null)
+                                {
+                                    SaveManager.ImportSave($"{currOption}", currOption5);
+                                    ConsoleSystem.AnimatedText("Save Imported! You can find it in your saves folder.");
+                                    ConsoleSystem.AnimatedText("Your saves are located here: " + SaveManager.GameSavePath);
+                                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                                    Console.ReadKey();
+                                }
+                                break;
+                            default:
+                                ConsoleSystem.SetColor(Color.DarkRed);
+                                ConsoleSystem.AnimatedText("Invalid Option.");
+                                Task.Delay(2000).Wait();
+                                break;
+                        }
+                        break;
+                    case "3":
+                        ConsoleSystem.AnimatedText("Are you sure you want to delete this save?");
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Yes", identity = "0", matchMenu = false, newLine = true });
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "No", identity = "1", matchMenu = false, newLine = true });
+                        var currOption6 = Console.ReadLine();
+                        Console.WriteLine();
+                        LogSystem.Log($"User selected option {currOption6}");
+                        switch (currOption6)
+                        {
+                            case "0":
+                                SaveManager.DeleteSave($"Save {currOption}");
+                                ConsoleSystem.AnimatedText("Save Deleted!");
+                                ConsoleSystem.AnimatedText("Press any key to continue...");
+                                Console.ReadKey();
+                                break;
+                            case "1":
+                                break;
+                            default:
+                                ConsoleSystem.SetColor(Color.DarkRed);
+                                ConsoleSystem.AnimatedText("Invalid Option.");
+                                Task.Delay(2000).Wait();
+                                break;
+                        }
+                        break;
+                    case "4":
+                        break;
+                    default:
+                        ConsoleSystem.SetColor(Color.DarkRed);
+                        ConsoleSystem.AnimatedText("Invalid Option.");
+                        Task.Delay(2000).Wait();
+                        SavesMenu();
+                        break;
+                }
+            }
+        }
+        public static void GenerateSaveMenu(string Save)
+        {
+            LogSystem.Log($"GenerateSaveMenu Function Started: {Save}");
+            ConsoleSystem.AppArt();
+            ConsoleSystem.SetColor(Color.DeepPink);
+            Console.WriteLine();
+            ConsoleSystem.CenterText("Select the data you wish to modify");
+            ConsoleSystem.CenterText($"╔════ {Save} ════════════════════════════════╗");
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Credits / Currency",
+                identity = "0",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Time Left Until Quota",
+                identity = "1",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Quota Amount",
+                identity = "2",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.GenerateOption(new MenuOption()
+            {
+                option = $"Back",
+                identity = "3",
+                color = Color.BlueViolet,
+                matchMenu = true,
+                newLine = true
+            });
+            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n\n");
+            var currOption = Console.ReadLine();
+            Console.WriteLine();
+            switch (currOption)
+            {
+                case "0":
+                    ConsoleSystem.AnimatedText("Enter the new amount of credits you wish to have.");
+                    var currOption2 = Console.ReadLine();
+                    Console.WriteLine();
+                    LogSystem.Log($"User entered {currOption2}");
+                    if (currOption2 != null)
+                    {
+                        var newAmount = Convert.ToInt32(currOption2);
+                        var newData = new GameData()
+                        {
+                            CoinCount = newAmount
+                        };
+                        SaveManager.ModifyGameData(Save, newData);
+                    }
+                    break;
+                case "1":
+                    ConsoleSystem.AnimatedText("Enter the new amount of time you wish to have.");
+                    ConsoleSystem.AnimatedText("Example: 1 = 1 Day. Please no more than 3.");
+                    var currOption3 = Console.ReadLine();
+                    Console.WriteLine();
+                    LogSystem.Log($"User entered {currOption3}");
+                    if (currOption3 != null)
+                    {
+                        var newAmount = Convert.ToInt32(currOption3);
+                        if (newAmount > 3)
+                        {
+                            ConsoleSystem.SetColor(Color.DarkRed);
+                            ConsoleSystem.AnimatedText("Operation Failed, above game limits.");
+                            LogSystem.Log("User entered a value above game limits.");
+                            break;
+                        }
+                        var newData = new GameData()
+                        {
+                            TimeLeft = newAmount
+                        };
+                        SaveManager.ModifyGameData(Save, newData);
+                    }
+                    break;
+                case "2":
+                    ConsoleSystem.AnimatedText("Enter the new amount of quota you wish to have.");
+                    var currOption4 = Console.ReadLine();
+                    Console.WriteLine();
+                    LogSystem.Log($"User entered {currOption4}");
+                    if (currOption4 != null)
+                    {
+                        var newAmount = Convert.ToInt32(currOption4);
+                        var newData = new GameData()
+                        {
+                            QuotaAmount = newAmount
+                        };
+                        SaveManager.ModifyGameData(Save, newData);
+                    }
+                    break;
+                case "3":
+                    break;
+                default:
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("Invalid Option.");
+                    break;
             }
         }
         public static void SettingsMenu()
@@ -327,27 +649,24 @@ namespace AstroClient.Client
             try
             {
                 ConsoleSystem.AppArt();
-                Console.SetWindowSize(100, 30);
-                Console.SetBufferSize(100, 30);
                 LogSystem.Log("Console window and buffer size set");
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error setting console window/buffer size: {ex.Message}");
+                LogSystem.ReportError($"Error setting console window/buffer size: {ex}");
                 ConsoleSystem.AnimatedText("An error occurred. Please check the log file for details.");
                 return;
             }
-
-            ConsoleSystem.SetColor(Color.HotPink);
-            Console.WriteLine($"                                                                                 {UpdateManager.Version}");
             ConsoleSystem.SetColor(Color.BlueViolet);
-            ConsoleSystem.AnimatedText($"Menu Music: {ConfigSystem.loadedConfig.backgroundMusic}");
-            ConsoleSystem.AnimatedText($"Auto Update: {ConfigSystem.loadedConfig.autoUpdateAstro}");
-            ConsoleSystem.AnimatedText($"Custom Path: {ConfigSystem.loadedConfig.customPath ?? "Steam"}");
-            ConsoleSystem.SetColor(Color.HotPink);
-            Console.WriteLine("\n╔════════════════════════════════════════════╗");
+            Console.WriteLine();
+            ConsoleSystem.CenterText($"Menu Music: {ConfigSystem.loadedConfig.backgroundMusic}");
+            ConsoleSystem.CenterText($"Auto Update: {ConfigSystem.loadedConfig.autoUpdateAstro}");
+            ConsoleSystem.CenterText($"Custom Path: {ConfigSystem.loadedConfig.customPath ?? "Steam"}");
+            ConsoleSystem.SetColor(Color.DeepPink);
+            Console.WriteLine();
+            ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
 
-            string[] options = { "Auto Update", "Allow Menu Music", "Priority Song", "Back" };
+            string[] options = { "Auto Update", "Allow Menu Music", "Favorite Song", "Music Volume", "Text Animations", "Open Logs", "Back" };
             for (int i = 0; i < options.Length; i++)
             {
                 ConsoleSystem.GenerateOption(new MenuOption()
@@ -360,8 +679,7 @@ namespace AstroClient.Client
                 });
                 LogSystem.Log($"Menu option generated for {options[i]}");
             }
-
-            Console.WriteLine("╚════════════════════════════════════════════╝\n");
+            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n");
 
             try
             {
@@ -392,7 +710,7 @@ namespace AstroClient.Client
                                 ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
                                 break;
                         }
-                        Thread.Sleep(1000);
+                        Task.Delay(1000).Wait();
                         break;
                     case "0":
                         ConsoleSystem.AnimatedText("Would you like to enable or disable Auto Update?");
@@ -420,23 +738,73 @@ namespace AstroClient.Client
                                 ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
                                 break;
                         }
-                        Thread.Sleep(1000);
+                        Task.Delay(1000).Wait();
                         break;
                     case "2":
                         MusicMenu();
                         break;
                     case "3":
+                        ConsoleSystem.AnimatedText("Enter the new volume you wish to have. MAX = 1");
+                        var currOption4 = Console.ReadLine();
+                        Console.WriteLine();
+                        LogSystem.Log($"User entered {currOption4}");
+                        if (currOption4 != null)
+                        {
+                            var newAmount = Convert.ToSingle(currOption4);
+                            if (newAmount > 1)
+                            {
+                                newAmount = 1;
+                            }
+                            ConfigSystem.loadedConfig.musicVolume = newAmount;
+                            ConfigSystem.loadedConfig.Save();
+                            LogSystem.Log($"Volume changed to {newAmount}");
+                            return;
+                        }
+                        break;
+                    case "4":
+                        ConsoleSystem.AnimatedText("Would you like to enable or disable Text Animations?");
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Enable", identity = "0", matchMenu = false, newLine = true });
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Disable", identity = "1", matchMenu = false, newLine = true });
+                        var currOption5 = Console.ReadLine(); Console.WriteLine();
+                        switch (currOption5)
+                        {
+                            case "0":
+                                DiscordManager.UpdatePresence("cog", "Enabling Text Animations");
+                                ConfigSystem.loadedConfig.animatedText = true;
+                                ConfigSystem.loadedConfig.Save();
+                                ConsoleSystem.AnimatedText("Text Animations Enabled!");
+                                break;
+                            case "1":
+                                DiscordManager.UpdatePresence("cog", "Disabling Text Animations");
+                                ConfigSystem.loadedConfig.animatedText = false;
+                                ConfigSystem.loadedConfig.Save();
+                                ConsoleSystem.AnimatedText("Text Animations Disabled!");
+                                break;
+                            default:
+                                ConsoleSystem.SetColor(Color.DarkRed);
+                                ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
+                                break;
+                        }
+                        Task.Delay(1000).Wait();
+                        break;
+                    case "5":
+                        DiscordManager.UpdatePresence("cog", "Opening Log Folder");
+                        Process.Start("explorer.exe", Directory.GetCurrentDirectory() + "\\Logs");
+                        Task.Delay(1000).Wait();
+                        break;
+                    case "6":
                         break;
                     default:
                         ConsoleSystem.SetColor(Color.DarkRed);
                         ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
-                        Thread.Sleep(1000);
+                        Task.Delay(1000).Wait();
+                        SettingsMenu();
                         break;
                 }
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"An error occurred in SettingsMenu: {ex.Message}");
+                LogSystem.ReportError($"An error occurred in SettingsMenu: {ex}");
                 ConsoleSystem.AnimatedText("An error occurred. Please check the log file for details.");
             }
             finally
@@ -451,33 +819,33 @@ namespace AstroClient.Client
             try
             {
                 ConsoleSystem.AppArt();
-                ConsoleSystem.SetColor(Color.BlueViolet);
-                Console.SetWindowSize(100, 30);
-                Console.SetBufferSize(100, 30);
                 LogSystem.Log("Console window and buffer size set");
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error setting console window/buffer size: {ex.Message}");
+                LogSystem.ReportError($"Error setting console window/buffer size: {ex}");
                 ConsoleSystem.AnimatedText("An error occurred. Please check the log file for details.");
                 return;
             }
-            ConsoleSystem.SetColor(Color.HotPink);
-            Console.WriteLine("\n╔════════════════════════════════════════════╗");
+
+            ConsoleSystem.SetColor(Color.DeepPink);
+            ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
+
             var i = 0;
-            foreach (var item in MusicManager.music)
+            foreach (var song in MusicManager.library.GetAllSongs())
             {
                 i++;
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
-                    option = TruncateName(item.Key, 35),
-                    identity = i.ToString(),
+                    option = TruncateName(song.Name, 35),
+                    identity = song.Number.ToString(),
                     color = Color.BlueViolet,
                     matchMenu = true,
                     newLine = true
                 });
-                LogSystem.Log($"Menu option generated for {item.Key}");
+                LogSystem.Log($"Menu option generated for {song.Name}");
             }
+
             ConsoleSystem.GenerateOption(new MenuOption()
             {
                 option = "None/Remove Priority Song",
@@ -494,7 +862,7 @@ namespace AstroClient.Client
                 matchMenu = true,
                 newLine = true
             });
-            Console.WriteLine("╚════════════════════════════════════════════╝\n");
+            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n");
 
             try
             {
@@ -512,31 +880,37 @@ namespace AstroClient.Client
                 {
                     return;
                 }
-                if (!MusicManager.musicIndex.ContainsKey(currOption))
+
+                if (int.TryParse(currOption, out int selectedNumber) && MusicManager.library.IsValidSongNumber(selectedNumber))
+                {
+                    var selectedSong = MusicManager.library.GetSongByNumber(selectedNumber);
+                    DiscordManager.UpdatePresence("cog", $"Setting Priority Song");
+                    ConsoleSystem.AnimatedText($"Playing {selectedSong.Name}...");
+                    ConfigSystem.loadedConfig.prioritySong = selectedSong.Name;
+                    ConfigSystem.loadedConfig.Save();
+                    MusicManager.prioritySong = true;
+                    LogSystem.Log($"Playing song: {selectedSong.Name}");
+                }
+                else
                 {
                     LogSystem.Log("Invalid option selected.");
-                    ConsoleSystem.AnimatedText("Invalid option selected. Please check the log file for details.");
+                    ConsoleSystem.AnimatedText("Invalid option selected.");
+                    Task.Delay(2000).Wait();
+                    MusicMenu();
                     return;
                 }
-
-                DiscordManager.UpdatePresence("cog", $"Setting Priority Song");
-                var tempValue = MusicManager.musicIndex[currOption];
-                ConsoleSystem.AnimatedText($"Playing {tempValue}...");
-                ConfigSystem.loadedConfig.prioritySong = tempValue;
-                ConfigSystem.loadedConfig.Save();
-                MusicManager.prioritySong = true;
-                LogSystem.Log($"Playing song: {tempValue}");
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"An error occurred: {ex.Message}");
+                LogSystem.ReportError($"An error occurred: {ex}");
                 ConsoleSystem.AnimatedText("An error occurred. Please check the log file for details.");
             }
             finally
             {
                 LogSystem.Log("MusicMenu Function Ended");
-                Thread.Sleep(1000);
+                Task.Delay(1000).Wait();
             }
+
             string TruncateName(string input, int maxLength)
             {
                 if (input.Length > maxLength)

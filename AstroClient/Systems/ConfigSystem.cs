@@ -14,8 +14,10 @@ namespace AstroClient.Systems
         // Config Values
         public bool backgroundMusic { get; set; } = true;
         public bool autoUpdateAstro { get; set; } = true;
+        public bool animatedText { get; set; } = true;
         public string? prioritySong { get; set; } = null;
         public string? customPath { get; set; } = null;
+        public float musicVolume { get; set; } = 0.4f;
 
         public void Save()
         {
@@ -35,15 +37,13 @@ namespace AstroClient.Systems
             }
         }
 
-        public static async Task GetConfig()
+        public static void GetConfig()
         {
             try
             {
                 LogSystem.Log("Attempting to load configuration.");
 
                 loadedConfig = Load();
-                await Task.Delay(1000);
-
                 if (loadedConfig != null)
                 {
                     LogSystem.Log("Configuration loaded successfully.");
@@ -55,7 +55,9 @@ namespace AstroClient.Systems
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in GetConfig: {ex.Message}");
+                ConsoleSystem.SetColor(System.Drawing.Color.DarkRed);
+                ConsoleSystem.AnimatedText($"Failed to load configuration. Check logs for details.");
+                LogSystem.ReportError($"Error in GetConfig: {ex}");
             }
         }
         public static void ResetCurrentConfigPath()

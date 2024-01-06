@@ -8,32 +8,41 @@ namespace AstroClient
         public static string? lethalCompanyPath;
         public static string? bepInExPath;
         public static string? pluginsPath;
-        private static async Task Main(string[] args)
+
+        [STAThread]
+        private static void Main(string[] args)
         {
             try
             {
-                await LogSystem.Start();
-                await WindowManager.Start();
-                await DependencyManager.CheckDependencies();
-                await ConfigSystem.GetConfig();
-                await ServerManager.SetupData();
-                await UpdateManager.CheckAppUpdates();
-                await UpdateManager.CheckModUpdates();
-                await SteamSystem.Start();
-                await DiscordManager.Start();
-                await ModManager.Start();
-                Task.Run(MusicManager.Start);
-                await MenuManager.Start();
+                // Main Stuffs
+                LogSystem.Start();
+                WindowManager.Start();
+                DependencyManager.CheckDependencies();
+                ConfigSystem.GetConfig();
+                ServerManager.SetupData();
+                SteamManager.Start();
+                DiscordManager.Start();
+                ModManager.Start();
+                SaveManager.Start();
+                new Thread(MusicManager.Start).Start();
+                UpdateManager.CheckAppUpdates();
+                MenuManager.Start();
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError(ex.ToString());
+                // If astro client crashes, log the error
+                LogSystem.ReportError($"Fatal Error in Main: {ex}");
             }
             finally
             {
-                Console.WriteLine("Astro Client has ran into a fatal error and cannot continue. ");
-                Console.WriteLine("You can check the log file for more information. ");
-                Console.WriteLine("Press any key to exit.");
+                // Upon crashing, display a message to the user about the crash
+                string logDir = Directory.GetCurrentDirectory();
+                string logDirectory = $"{logDir}\\Logs";
+                ConsoleSystem.SetColor(System.Drawing.Color.DarkRed);
+                ConsoleSystem.AnimatedText("Astro Client has ran into a fatal error and cannot continue. ");
+                ConsoleSystem.AnimatedText("You can check the log file for more information.");
+                ConsoleSystem.AnimatedText($"Log Files are located at {logDirectory}.");
+                ConsoleSystem.AnimatedText("Press any key to exit.");
                 Console.ReadKey();
                 Environment.Exit(0);
             }

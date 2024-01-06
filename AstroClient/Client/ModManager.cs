@@ -13,11 +13,12 @@ namespace AstroClient.Client
 {
     internal class ModManager
     {
-        public static async Task Start()
+        public static Version? Version;
+        public static void Start()
         {
-            await CheckMods();
+            CheckMods();
         }
-        public static async Task CheckMods()
+        public static void CheckMods()
         {
             if (Program.lethalCompanyPath == null)
             {
@@ -57,12 +58,11 @@ namespace AstroClient.Client
 
             LogSystem.Log("Checking for mods...");
 
-            var mods = FileSystem.GetFiles(Program.pluginsPath, ".", SearchOption.TopDirectoryOnly);
+            var mods = FileSystem.GetFiles(Program.pluginsPath, "*.dll", SearchOption.AllDirectories);
             int modCount = 0;
             if (mods.Count == 0)
             {
                 LogSystem.Log("No mods found.");
-                return;
             }
             else
             {
@@ -72,9 +72,20 @@ namespace AstroClient.Client
                     LogSystem.Log($"Found mod: {modName}");
                     modCount++;
                 }
+                LogSystem.Log($"Found {modCount} mods.");
             }
 
-            LogSystem.Log($"Found {modCount} mods.");
+            LogSystem.Log("Getting Local Modpack Version.");
+            if (FileSystem.FileExists($"{Program.bepInExPath}\\Version"))
+            {
+                Version = new Version(FileSystem.ReadAllText($"{Program.bepInExPath}\\Version"));
+                LogSystem.Log($"Local Modpack Version: {Version}");
+            }
+            else
+            {
+                Version = new Version("0.0.0");
+                LogSystem.Log($"Local Modpack Version: {Version}");
+            }
         }
         public static void InstallMods()
         {
@@ -85,91 +96,80 @@ namespace AstroClient.Client
                 CheckLethalCompany();
                 LogSystem.Log("Checked Lethal Company.");
 
-                if (CheckForExistingMods() == true)
+                if (CheckForExistingMods())
                 {
                     ConsoleSystem.SetColor(Color.DarkRed);
                     ConsoleSystem.AnimatedText("Existing Mods Found. Please remove them before installing our pack.");
                     ConsoleSystem.AnimatedText("You can use option 2 on the main menu to remove the mods.");
+                    ConsoleSystem.AnimatedText("If you care about your mods, please back them up using option 6 before removing them.");
                     ConsoleSystem.AnimatedText("Press any key to continue...");
                     Console.ReadKey();
                     LogSystem.Log("Existing mods found. Aborting installation.");
                     return;
                 }
 
-                using (var client = new WebClient())
+                ConsoleSystem.SetColor(Color.Magenta);
+                ConsoleSystem.AnimatedText("Downloading Zip...");
+                LogSystem.Log("Initiating mod pack download.");
+
+                try
                 {
-                    // More spaghetti code yayyyyy
-                    ConsoleSystem.SetColor(Color.Magenta);
-                    ConsoleSystem.AnimatedText("Downloading Zip...");
-                    LogSystem.Log("Initiating mod pack download.");
+                    LogSystem.Log("Mod pack download started.");
+                    DownloadSystem.ServerDownload(DownloadSystem.AppFiles["modpack"], $"{Program.lethalCompanyPath}\\temp_astro.zip");
+                }
+                catch (Exception ex)
+                {
+                    ConsoleSystem.AnimatedText($"Error Downloading Mods: {ex}");
+                    LogSystem.ReportError($"Error downloading mods: {ex}");
+                    Task.Delay(2500).Wait();
+                    return;
+                }
 
-                    try
+                ConsoleSystem.AnimatedText("Zip Download Complete!");
+                ConsoleSystem.AnimatedText("Extracting Zip...");
+                ConsoleSystem.SetColor(Color.Magenta);
+                LogSystem.Log("Mod pack zip download complete. Extracting zip.");
+
+                using (var archive = ZipFile.OpenRead($"{Program.lethalCompanyPath}\\temp_astro.zip"))
+                {
+                    using (var progress = new ProgressBar())
                     {
-                        client.DownloadProgressChanged += (s, e) =>
+                        int totalEntries = archive.Entries.Count;
+                        int entryIndex = 0;
+
+                        foreach (var entry in archive.Entries)
                         {
-                            Console.Title = $"ASTRO BOYZ! | Downloading... | {e.ProgressPercentage}% ({e.BytesReceived}/{e.TotalBytesToReceive})";
-                        };
-                        client.DownloadFileAsync(new Uri(UpdateManager.AppFiles["modpack"]), $"{Program.lethalCompanyPath}\\temp_astro.zip");
-                        LogSystem.Log("Mod pack download started.");
-                    }
-                    catch (Exception ex)
-                    {
-                        ConsoleSystem.AnimatedText($"Error Downloading Mods: {ex.Message}");
-                        LogSystem.ReportError($"Error downloading mods: {ex.Message}");
-                        Thread.Sleep(2500);
-                        return;
-                    }
+                            // Skip directories
+                            if (string.IsNullOrEmpty(entry.Name))
+                                continue;
 
-                    while (client.IsBusy)
-                    {
-                        Thread.Sleep(500);
-                    }
-                    ConsoleSystem.AnimatedText("Zip Download Complete!");
-                    ConsoleSystem.AnimatedText("Opening Zip...");
-                    ConsoleSystem.SetColor(Color.Magenta);
-                    LogSystem.Log("Mod pack zip download complete. Opening zip.");
+                            string destinationPath = Path.Combine(Program.lethalCompanyPath, entry.FullName);
+                            string destinationDir = Path.GetDirectoryName(destinationPath);
 
-                    try
-                    {
-                        using (ZipArchive archive = ZipFile.OpenRead($"{Program.lethalCompanyPath}\\temp_astro.zip"))
-                        {
-                            using (var progress = new ProgressBar())
-                            {
-                                for (int i = 0; i <= archive.Entries.Count; i++)
-                                {
-                                    progress.Report((double)i / archive.Entries.Count);
-                                    Console.Title = $"ASTRO BOYZ! | Installing Modz... | {i}/{archive.Entries.Count}";
-                                    Thread.Sleep(1);
-                                }
-                            }
+                            if (!Directory.Exists(destinationDir))
+                                Directory.CreateDirectory(destinationDir);
+
+                            entry.ExtractToFile(destinationPath, overwrite: true);
+
+                            entryIndex++;
+                            progress.Report((double)entryIndex / totalEntries);
+                            Console.Title = $"ASTRO BOYZ! | Installing Mods... | {entryIndex}/{totalEntries}";
                         }
-                        Console.Write($"                                                                    ");
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        ConsoleSystem.SetColor(Color.Cyan);
-                        ConsoleSystem.AnimatedText("Extracting Files...");
-                        LogSystem.Log("Extracting files from mod pack zip.");
-                        ZipFile.ExtractToDirectory($"{Program.lethalCompanyPath}\\temp_astro.zip", $"{Program.lethalCompanyPath}");
-
-                        ConsoleSystem.SetColor(Color.Green);
-                        ConsoleSystem.AnimatedText("Finished!");
-                        FileSystem.DeleteFile($"{Program.lethalCompanyPath}\\temp_astro.zip");
-                        LogSystem.Log("Mod pack installation complete.");
-                        Thread.Sleep(2500);
-                    }
-                    catch (Exception ex)
-                    {
-                        ConsoleSystem.SetColor(Color.DarkRed);
-                        ConsoleSystem.AnimatedText($"Error Extracting Files: {ex.Message}");
-                        LogSystem.ReportError($"Error extracting files: {ex.Message}");
-                        ConsoleSystem.AnimatedText("Perhaps the file was corrupted?");
-                        ConsoleSystem.AnimatedText("Press any key to continue...");
-                        Console.ReadKey();
                     }
                 }
+
+                FileSystem.WriteAllText($"{Program.bepInExPath}\\Version", ServerManager.latestModpackVersion.ToString());
+                ConsoleSystem.SetColor(Color.Green);
+                ConsoleSystem.AnimatedText("Mods installation complete.");
+                FileSystem.DeleteFile($"{Program.lethalCompanyPath}\\temp_astro.zip");
+                LogSystem.Log("Mod pack installation complete.");
+                Task.Delay(2500).Wait();
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in InstallModz: {ex.Message}");
+                ConsoleSystem.SetColor(Color.DarkRed);
+                ConsoleSystem.AnimatedText($"Error Installing Mods. Check logs for details.");
+                LogSystem.ReportError($"Error in InstallMods: {ex}");
             }
             finally
             {
@@ -177,6 +177,7 @@ namespace AstroClient.Client
                 LogSystem.Log("Mod installation process finished.");
             }
         }
+
         public static void UninstallMods()
         {
             try
@@ -198,7 +199,7 @@ namespace AstroClient.Client
                     }
                     catch (Exception ex)
                     {
-                        LogSystem.ReportError($"Error deleting directory (BepInExPath): {ex.Message}");
+                        LogSystem.ReportError($"Error deleting directory (BepInExPath): {ex}");
                     }
                     try
                     {
@@ -207,7 +208,7 @@ namespace AstroClient.Client
                     }
                     catch (Exception ex)
                     {
-                        LogSystem.ReportError($"Error deleting file (doorstop_config.ini): {ex.Message}");
+                        LogSystem.ReportError($"Error deleting file (doorstop_config.ini): {ex}");
                     }
                     try
                     {
@@ -216,13 +217,13 @@ namespace AstroClient.Client
                     }
                     catch (Exception ex)
                     {
-                        LogSystem.ReportError($"Error deleting file (winhttp.dll): {ex.Message}");
+                        LogSystem.ReportError($"Error deleting file (winhttp.dll): {ex}");
                     }
 
                     ConsoleSystem.SetColor(Color.Green);
                     ConsoleSystem.AnimatedText("All mod files removed!");
                     LogSystem.Log("All mod files have been successfully removed.");
-                    Thread.Sleep(2500);
+                    Task.Delay(2500).Wait();
                 }
                 else
                 {
@@ -235,12 +236,81 @@ namespace AstroClient.Client
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in RemoveModz: {ex.Message}");
+                LogSystem.ReportError($"Error in RemoveModz: {ex}");
             }
             finally
             {
                 Console.Clear();
                 LogSystem.Log("Mod removal process finished.");
+            }
+        }
+        public static void BackupMods()
+        {
+            try
+            {
+                LogSystem.Log("Starting mod backup process.");
+                DiscordManager.UpdatePresence("cog", "Backing Up Mods");
+                CheckLethalCompany();
+
+                // Check For Currently Installed Modz
+                if (CheckForExistingMods() == true)
+                {
+                    var dir = FileSystem.CreateUniqueFolderName("Mod-BackUp-", $"{Directory.GetCurrentDirectory()}\\Backups\\");
+                    ConsoleSystem.SetColor(Color.Cyan);
+                    LogSystem.Log("Existing mods found. Beginning backup process.");
+
+                    try
+                    {
+                        FileSystem.CopyDirectory(Program.bepInExPath, $"{dir}\\BepInEx");
+                        LogSystem.Log($"Copied directory: {Program.bepInExPath} to {dir}\\BepInEx");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogSystem.ReportError($"Error copying directory (BepInExPath): {ex}");
+                    }
+                    try
+                    {
+                        FileSystem.CopyFile($"{Program.lethalCompanyPath}\\doorstop_config.ini", $"{dir}\\doorstop_config.ini");
+                        LogSystem.Log($"Copied file: {Program.lethalCompanyPath}\\doorstop_config.ini to {Program.lethalCompanyPath}\\doorstop_config.ini");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogSystem.ReportError($"Error copying file (doorstop_config.ini): {ex}");
+                    }
+                    try
+                    {
+                        FileSystem.CopyFile($"{Program.lethalCompanyPath}\\winhttp.dll", $"{dir}\\winhttp.dll");
+                        LogSystem.Log($"Copied file: {Program.lethalCompanyPath}\\winhttp.dll to {dir}\\winhttp.dll");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogSystem.ReportError($"Error copying file (winhttp.dll): {ex}");
+                    }
+
+                    ConsoleSystem.SetColor(Color.Green);
+                    LogSystem.Log("All mod files have been successfully backed up.");
+                    Task.Delay(2500).Wait();
+                }
+                else
+                {
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("No mods installed.");
+                    LogSystem.Log("No mods installed. Nothing to backup.");
+                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                    Console.ReadKey();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"Error in BackupMods: {ex}");
+            }
+            finally
+            {
+                LogSystem.Log("Mod backup process finished.");
+                ConsoleSystem.AnimatedText("Mod Backup Finished.");
+                ConsoleSystem.AnimatedText($"You can find your backups here: {Directory.GetCurrentDirectory()}\\Backups");
+                ConsoleSystem.AnimatedText("Press any key to continue...");
+                Console.ReadKey();
             }
         }
         public static void ProcessPlugin(string pluginName, bool state, string enabledPath, string disabledPath, string alreadyStateMessage)
@@ -281,9 +351,10 @@ namespace AstroClient.Client
             }
             catch (Exception ex)
             {
-                ConsoleSystem.AnimatedText($"Error: {ex.Message}");
-                LogSystem.ReportError($"{pluginName} error: {ex.Message}");
-                Thread.Sleep(2000);
+                ConsoleSystem.SetColor(Color.DarkRed);
+                ConsoleSystem.AnimatedText($"An error occured while processing. Check log file for details.");
+                LogSystem.ReportError($"{pluginName} error: {ex}");
+                Task.Delay(2500).Wait();
             }
 
             LogSystem.Log($"{pluginName}: End processing.");
@@ -302,85 +373,80 @@ namespace AstroClient.Client
         }
         public static void RetroShading(bool state)
         {
-            // Too lazy to make logs for this lol
+            LogSystem.Log("Checking for existing shaders...");
             CheckLethalCompany();
-            if (state == true)
+
+            if (state)
             {
-                if (CheckForExistingShaders() == true)
+                if (CheckForExistingShaders())
                 {
+                    LogSystem.Log("Existing shaders found. Please remove them before installing new shaders.");
                     ConsoleSystem.SetColor(Color.DarkRed);
                     ConsoleSystem.AnimatedText("Existing Shaders Found. Please remove them before installing new shaders.");
                     ConsoleSystem.AnimatedText("Press any key to continue...");
                     Console.ReadKey();
                     return;
                 }
-                using (var client = new WebClient())
+
+                LogSystem.Log("Downloading shaders...");
+                ConsoleSystem.SetColor(Color.Magenta);
+                ConsoleSystem.AnimatedText("Downloading...");
+
+                try
                 {
-                    ConsoleSystem.SetColor(Color.Magenta);
-                    ConsoleSystem.AnimatedText("Downloading...");
-                    try
-                    {
-                        client.DownloadProgressChanged += (s, e) =>
-                        {
-                            Console.Title = $"ASTRO BOYZ! | Downloading... | {e.ProgressPercentage}% ({e.BytesReceived}/{e.TotalBytesToReceive})";
-                        };
-                        client.DownloadFileAsync(new Uri(UpdateManager.AppFiles["reshade"]), $"{Program.lethalCompanyPath}\\setup.exe");
-                        while (client.IsBusy)
-                        {
-                            Thread.Sleep(500);
-                        }
-                        client.DownloadFileAsync(new Uri(UpdateManager.AppFiles["shader"]), $"{Program.lethalCompanyPath}\\RetroShader.ini");
-                        while (client.IsBusy)
-                        {
-                            Thread.Sleep(500);
-                        }
-                        client.DownloadFileAsync(new Uri(UpdateManager.AppFiles["instructions"]), $"{Program.lethalCompanyPath}\\intructions.txt");
-                    }
-                    catch (Exception ex)
-                    {
-                        ConsoleSystem.AnimatedText($"Error Downloading Shaders: {ex.Message}");
-                        LogSystem.ReportError($"Error downloading shaders: {ex.Message}");
-                        Thread.Sleep(2500);
-                        return;
-                    }
-                    ConsoleSystem.AnimatedText("Opening Setup...");
-                    ConsoleSystem.SetColor(Color.Magenta);
-                    Process p1 = null;
-                    Process p2 = null;
-                    try
-                    {
-                        p1 = Process.Start($"{Program.lethalCompanyPath}\\setup.exe");
-                        p2 = Process.Start($"{Program.lethalCompanyPath}\\intructions.txt");
-                        ConsoleSystem.SetForegroundWindow(p1.MainWindowHandle);
-                        ConsoleSystem.SetForegroundWindow(p2.MainWindowHandle);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogSystem.ReportError($"Error starting processes: {ex.Message}");
-                        ConsoleSystem.SetColor(Color.DarkRed);
-                        ConsoleSystem.AnimatedText($"Error Starting Processes: {ex.Message}");
-                        ConsoleSystem.AnimatedText("Perhaps the file was corrupted?");
-                        ConsoleSystem.AnimatedText("Press any key to continue...");
-                        Console.ReadKey();
-                    }
+                    DownloadSystem.ServerDownload(DownloadSystem.AppFiles["reshade"], $"{Program.lethalCompanyPath}\\setup.exe");
+                    DownloadSystem.ServerDownload(DownloadSystem.AppFiles["shader"], $"{Program.lethalCompanyPath}\\RetroShader.ini");
+                    DownloadSystem.ServerDownload(DownloadSystem.AppFiles["instructions"], $"{Program.lethalCompanyPath}\\instructions.txt");
+                }
+                catch (Exception ex)
+                {
+                    LogSystem.ReportError($"Error downloading shaders: {ex}");
                     ConsoleSystem.SetColor(Color.DarkRed);
-                    ConsoleSystem.AnimatedText("Please follow the instructions in the window(s) that were opened!!!!");
-                    while (p1.HasExited == false)
-                    {
-                        Console.Title = $"ASTRO BOYZ! | Waiting for Setup to Finish or Exit... | {p1.MainWindowTitle}";
-                        Thread.Sleep(500);
-                    }
-                    if (FileSystem.FileExists($"{Program.lethalCompanyPath}\\ReShade.ini"))
-                    {
-                        FileSystem.ReplaceIniValue($"{Program.lethalCompanyPath}\\ReShade.ini", "INPUT", "KeyOverlay", "73,1,0,0");
-                    }
-                    Thread.Sleep(2000);
+                    ConsoleSystem.AnimatedText($"Error Downloading Shaders. Check logs for details.");
+                    Task.Delay(2500).Wait();
+                    return;
+                }
+
+                ConsoleSystem.AnimatedText("Opening Setup...");
+                ConsoleSystem.SetColor(Color.Magenta);
+                Process p1 = null;
+                Process p2 = null;
+
+                try
+                {
+                    p1 = Process.Start($"{Program.lethalCompanyPath}\\setup.exe");
+                    p2 = Process.Start($"{Program.lethalCompanyPath}\\instructions.txt");
+                    ConsoleSystem.SetForegroundWindow(p1.MainWindowHandle);
+                    ConsoleSystem.SetForegroundWindow(p2.MainWindowHandle);
+                }
+                catch (Exception ex)
+                {
+                    LogSystem.ReportError($"Error starting processes: {ex}");
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText($"Error Starting Processes. Check log file for details.");
+                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                    Console.ReadKey();
+                }
+
+                ConsoleSystem.SetColor(Color.DarkRed);
+                ConsoleSystem.AnimatedText("Please follow the instructions in the window(s) that were opened!!!!");
+
+                while (p1.HasExited == false)
+                {
+                    Console.Title = $"ASTRO BOYZ! | Waiting for Setup to Finish or Exit... | {p1.MainWindowTitle}";
+                    Task.Delay(25).Wait();
+                }
+
+                if (FileSystem.FileExists($"{Program.lethalCompanyPath}\\ReShade.ini"))
+                {
+                    FileSystem.ReplaceIniValue($"{Program.lethalCompanyPath}\\ReShade.ini", "INPUT", "KeyOverlay", "73,1,0,0");
                 }
             }
             else
             {
                 if (CheckForExistingShaders() == false)
                 {
+                    LogSystem.Log("No shaders found.");
                     ConsoleSystem.SetColor(Color.DarkRed);
                     ConsoleSystem.AnimatedText("No shaders found.");
                     ConsoleSystem.AnimatedText("Press any key to continue...");
@@ -389,6 +455,7 @@ namespace AstroClient.Client
                 }
                 else
                 {
+                    LogSystem.Log("Removing shaders...");
                     FileSystem.DeleteDirectory(Program.lethalCompanyPath + "\\reshade-shaders");
                     FileSystem.DeleteFile(Program.lethalCompanyPath + "\\dxgi.dll");
                     FileSystem.DeleteFile(Program.lethalCompanyPath + "\\ReShade.ini");
@@ -396,10 +463,11 @@ namespace AstroClient.Client
                     FileSystem.DeleteFile(Program.lethalCompanyPath + "\\ReShadePreset.ini");
                     FileSystem.DeleteFile(Program.lethalCompanyPath + "\\setup.exe");
                     FileSystem.DeleteFile(Program.lethalCompanyPath + "\\RetroShader.ini");
-                    FileSystem.DeleteFile(Program.lethalCompanyPath + "\\intructions.txt");
+                    FileSystem.DeleteFile(Program.lethalCompanyPath + "\\instructions.txt");
+                    LogSystem.Log("Shaders Removed!");
                     ConsoleSystem.SetColor(Color.Green);
                     ConsoleSystem.AnimatedText("Shaders Removed!");
-                    Thread.Sleep(1500);
+                    Task.Delay(2500).Wait();
                     return;
                 }
             }

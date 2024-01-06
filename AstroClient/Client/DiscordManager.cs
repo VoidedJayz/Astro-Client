@@ -13,7 +13,7 @@ namespace AstroClient.Client
     {
         private static DiscordRpcClient? client;
 
-        public static async Task Start()
+        public static void Start()
         {
             try
             {
@@ -33,11 +33,11 @@ namespace AstroClient.Client
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in DiscordManager: {ex.Message}");
+                LogSystem.ReportError($"Error in DiscordManager: {ex}");
             }
         }
 
-        public static async Task UpdatePresence(string icon, string state)
+        public static void UpdatePresence(string icon, string state)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace AstroClient.Client
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in UpdatePresence: {ex.Message}");
+                LogSystem.ReportError($"Error in UpdatePresence: {ex}");
             }
         }
     }

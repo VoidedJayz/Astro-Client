@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using AstroClient.Systems;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,23 +10,28 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace AstroClient.Systems
+namespace AstroClient.Client
 {
-    internal class SteamSystem
+    internal class SteamManager
     {
         public static void LaunchSteamGame(int game)
         {
             try
             {
                 LogSystem.Log($"Attempting to launch Steam game with ID: {game}");
-                Process.Start("steam://rungameid/" + game);
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = $"steam://rungameid/{game}",
+                    UseShellExecute = true
+                };
+                Process.Start(startInfo);
                 LogSystem.Log("Steam game launched successfully.");
             }
             catch (Exception ex)
             {
                 ConsoleSystem.SetColor(Color.DarkRed);
-                ConsoleSystem.AnimatedText($"Error Starting Steam game: {ex.Message}");
-                LogSystem.ReportError($"Error starting Steam game: {ex.Message}");
+                ConsoleSystem.AnimatedText($"Error Starting Steam game. Check logs for details.");
+                LogSystem.ReportError($"Error starting Steam game: {ex}");
             }
         }
         public static void CloseSteamGame(int appId)
@@ -34,9 +40,17 @@ namespace AstroClient.Systems
 
             try
             {
-                LogSystem.Log($"Attempting to close Steam game with AppID: {appId}");
-                Process.Start(steamUrl);
+                LogSystem.Log($"Attempting to navigate to Steam game details with AppID: {appId}");
 
+                // Start the process to navigate to the game's details page in Steam
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = steamUrl,
+                    UseShellExecute = true // This is required to open URLs
+                };
+                Process.Start(startInfo);
+
+                // Attempt to close the game by its process name
                 Process[] processes = Process.GetProcessesByName("Lethal Company");
                 foreach (Process process in processes)
                 {
@@ -50,12 +64,13 @@ namespace AstroClient.Systems
             catch (Exception ex)
             {
                 ConsoleSystem.SetColor(Color.DarkRed);
-                ConsoleSystem.AnimatedText($"Error closing Steam game: {ex.Message}");
-                LogSystem.ReportError($"Error closing Steam game: {ex.Message}");
+                ConsoleSystem.AnimatedText($"Error closing Steam game. Check logs for details.");
+                LogSystem.ReportError($"Error closing Steam game: {ex}");
             }
         }
 
-        public static async Task Start()
+
+        public static void Start()
         {
             try
             {
@@ -89,7 +104,6 @@ namespace AstroClient.Systems
                         if (!string.IsNullOrEmpty(installDir))
                         {
                             fullPath = Path.Combine(steamAppsFolder, "common", installDir);
-                            LogSystem.Log($"Found game: {appName} at {fullPath}");
                         }
 
                         if (appName == "Lethal Company")
@@ -97,17 +111,18 @@ namespace AstroClient.Systems
                             Program.lethalCompanyPath = fullPath;
                             Program.bepInExPath = Path.Combine(Program.lethalCompanyPath, "BepInEx");
                             Program.pluginsPath = Path.Combine(Program.lethalCompanyPath, "BepInEx", "plugins");
+                            LogSystem.Log($"Found game: {appName} at {Program.lethalCompanyPath}");
                             LogSystem.Log("Paths set.");
                             return;
                         }
                     }
                 }
-
-                await Task.Delay(100);
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in CheckSteamInstallData: {ex.Message}");
+                ConsoleSystem.SetColor(Color.DarkRed);
+                ConsoleSystem.AnimatedText($"Error checking Steam install data. Check logs for details.");
+                LogSystem.ReportError($"Error in CheckSteamInstallData: {ex}");
             }
             if (!FileSystem.DirectoryExists(Program.lethalCompanyPath))
             {
@@ -127,7 +142,9 @@ namespace AstroClient.Systems
                 }
                 catch (Exception ex)
                 {
-                    LogSystem.ReportError($"Error in GetFolderPath: {ex.Message}");
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText($"Error getting folder path. Check logs for details.");
+                    LogSystem.ReportError($"Error in GetFolderPath: {ex}");
                 }
             }
         }
@@ -195,16 +212,47 @@ namespace AstroClient.Systems
             var match = Regex.Match(line, "\"[^\"]+\"\\s+\"([^\"]+)\"");
             return match.Success ? match.Groups[1].Value : "";
         }
-        private static string PromptForFolderPath()
+        public static string PromptForFolderPath()
         {
             Console.Clear();
             ConsoleSystem.SetColor(Color.White);
             ConsoleSystem.AnimatedText("Uh oh, looks like we were unable to find the folder path for Lethal Company.");
             ConsoleSystem.AnimatedText("Example: C:\\Program Files (x86)\\Steam\\steamapps\\common\\Lethal Company");
-            ConsoleSystem.AnimatedText("Please type a folder path or you can just press 'Enter' to select a folder.");
+            ConsoleSystem.AnimatedText("Please type a folder path or just press 'Enter' to open a browse dialog.");
+
             string folderPath = Console.ReadLine();
-            Console.WriteLine();
-            LogSystem.Log($"User entered folder path: {folderPath}");
+
+            // Check if the user pressed 'Enter' without typing anything
+            if (string.IsNullOrWhiteSpace(folderPath))
+            {
+                // Use FolderBrowserDialog
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.Title = "Please select your Lethal Company.exe";
+                    DialogResult result = openFileDialog.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(openFileDialog.FileName))
+                    {
+                        // Extracting the folder path from the full file path
+                        folderPath = Path.GetDirectoryName(openFileDialog.FileName);
+
+                        ConsoleSystem.AnimatedText($"Selected folder: {folderPath}");
+                        LogSystem.Log($"User selected folder path: {folderPath}");
+                    }
+                    else
+                    {
+                        ConsoleSystem.AnimatedText("No file was selected.");
+                        LogSystem.Log("User did not select a file.");
+                    }
+                }
+            }
+            else
+            {
+                // User entered a path manually
+                ConsoleSystem.AnimatedText($"You entered: {folderPath}");
+                LogSystem.Log($"User entered folder path: {folderPath}");
+            }
+
             return folderPath;
         }
 

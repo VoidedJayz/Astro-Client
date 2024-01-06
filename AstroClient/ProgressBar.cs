@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using AstroClient.Systems;
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace AstroClient
 {
     public class ProgressBar : IDisposable, IProgress<double>
     {
-        private const int blockCount = 50;
-        private readonly TimeSpan animationInterval = TimeSpan.FromSeconds(1.0 / 8);
+        private const char progressCharacter = '█';
+        private const char emptyProgressCharacter = '─'; // A lighter line for the empty part of the progress bar
+        private const string startDelimiter = "│"; // A vertical bar for the start delimiter
+        private const string endDelimiter = "│"; // A vertical bar for the end delimiter
+        private readonly TimeSpan animationInterval = TimeSpan.FromSeconds(1.0 / 30);
         private const string animation = @"|/-\";
 
-        private readonly System.Threading.Timer timer;
-
+        private readonly Timer timer;
         private double currentProgress = 0;
         private string currentText = string.Empty;
         private bool disposed = false;
@@ -21,7 +22,7 @@ namespace AstroClient
 
         public ProgressBar()
         {
-            timer = new System.Threading.Timer(TimerHandler);
+            timer = new Timer(TimerHandler);
             if (!Console.IsOutputRedirected)
             {
                 ResetTimer();
@@ -40,38 +41,24 @@ namespace AstroClient
             {
                 if (disposed) return;
 
-                int progressBlockCount = (int)(currentProgress * blockCount);
+                int consoleWidth = Console.WindowWidth - 10; // Adjusted for padding and percentage
+                int progressBlockCount = (int)(currentProgress * consoleWidth);
                 int percent = (int)(currentProgress * 100);
-                string text = string.Format("[{0}{1}] {2,3}% {3}",
-                    new string('#', progressBlockCount), new string('-', blockCount - progressBlockCount),
+                string text = string.Format("\r{0,-3}% {1}{2}{3}{4} {5}",
                     percent,
+                    startDelimiter,
+                    new string(progressCharacter, progressBlockCount),
+                    new string(emptyProgressCharacter, consoleWidth - progressBlockCount),
+                    endDelimiter,
                     animation[animationIndex++ % animation.Length]);
-                UpdateText(text);
 
+                ConsoleSystem.SetColor(System.Drawing.Color.DeepPink);
+                Console.Write(text);
+                Console.ResetColor();
+
+                currentText = text;
                 ResetTimer();
             }
-        }
-
-        private void UpdateText(string text)
-        {
-            int commonPrefixLength = 0;
-            int commonLength = Math.Min(currentText.Length, text.Length);
-            while (commonPrefixLength < commonLength && text[commonPrefixLength] == currentText[commonPrefixLength])
-            {
-                commonPrefixLength++;
-            }
-            StringBuilder outputBuilder = new StringBuilder();
-            outputBuilder.Append('\b', currentText.Length - commonPrefixLength);
-            outputBuilder.Append(text.Substring(commonPrefixLength));
-            int overlapCount = currentText.Length - text.Length;
-            if (overlapCount > 0)
-            {
-                outputBuilder.Append(' ', overlapCount);
-                outputBuilder.Append('\b', overlapCount);
-            }
-
-            Console.Write(outputBuilder);
-            currentText = text;
         }
 
         private void ResetTimer()
@@ -84,9 +71,9 @@ namespace AstroClient
             lock (timer)
             {
                 disposed = true;
-                UpdateText(string.Empty);
+                Console.Write("\r" + new string(' ', currentText.Length) + "\r"); // Clear the line
+                timer.Dispose();
             }
         }
-
     }
 }
