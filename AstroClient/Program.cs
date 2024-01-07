@@ -1,5 +1,7 @@
 ﻿using AstroClient.Client;
 using AstroClient.Systems;
+using static AstroClient.Objects;
+using System.Drawing;
 
 namespace AstroClient
 {

@@ -10,6 +10,7 @@ namespace AstroClient.Systems
     {
         public static string cdn = "https://storage.bunnycdn.com/astroswrld/Client/";
         public static string accessKey = "50390255-a5f5-48c5-aab7bacdece6-7b3b-4ada";
+        public static HttpClient client = new HttpClient();
         public static Dictionary<string, string> AppFiles = new Dictionary<string, string>()
         {
             { "astro", $"{cdn}AstroClient.exe" },
@@ -23,6 +24,7 @@ namespace AstroClient.Systems
         };
         public static Dictionary<string, string> dependencies = new Dictionary<string, string>()
         {
+            // App Stuff
             { "Colorful.Console.dll", $"{cdn}Dependencies/Colorful.Console.dll" },
             { "NAudio.dll", $"{cdn}Dependencies/NAudio.dll" },
             { "NAudio.Core.dll", $"{cdn}Dependencies/NAudio.Core.dll" },
@@ -31,6 +33,7 @@ namespace AstroClient.Systems
             { "NAudio.Asio.dll",  $"{cdn}Dependencies/NAudio.Asio.dll" },
             { "NAudio.Midi.dll", $"{cdn}Dependencies/NAudio.Midi.dll" },
             { "DiscordRPC.dll", $"{cdn}Dependencies/DiscordRPC.dll" },
+            // Songs
             { "Newtonsoft.Json.dll", $"{cdn}Dependencies/Newtonsoft.Json.dll" },
             { "MenuMusic\\FLAUNT.mp3", $"{cdn}Dependencies/Music/FLAUNT.mp3" },
             { "MenuMusic\\Drag_Me_Down.mp3", $"{cdn}Dependencies/Music/Drag_Me_Down.mp3" },
@@ -44,42 +47,43 @@ namespace AstroClient.Systems
             { "MenuMusic\\Montagem_Mysterious_Game.mp3", $"{cdn}Dependencies/Music/Montagem_Mysterious_Game.mp3" },
             { "MenuMusic\\Stuck_Inside.mp3", $"{cdn}Dependencies/Music/Stuck_Inside.mp3" },
             { "MenuMusic\\Numb.mp3", $"{cdn}Dependencies/Music/Numb.mp3" },
+            { "MenuMusic\\MYBAD.mp3", $"{cdn}Dependencies/Music/MYBAD.mp3" },
+            { "MenuMusic\\TheDetailsInTheDevil.mp3", $"{cdn}Dependencies/Music/TheDetailsInTheDevil.mp3" },
+            { "MenuMusic\\AnotherFiveNights.mp3", $"{cdn}Dependencies/Music/AnotherFiveNights.mp3" },
+            { "MenuMusic\\METAMORPHOSIS.mp3", $"{cdn}Dependencies/Music/METAMORPHOSIS.mp3" },
         };
 
-
-
+        public static void Start()
+        {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        }
         public static void ServerDownload(string link, string dest)
         {
             try
             {
                 Task downloadTask = Task.Run(async () =>
                 {
-                    LogSystem.Log($"Downloading {link}...");
-                    using (HttpClient client = new HttpClient())
+
+                    string downloadLink = $"{link}?accessKey={accessKey}";
+
+                    HttpResponseMessage response = await client.GetAsync(downloadLink);
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-
-                        string downloadLink = $"{link}?accessKey={accessKey}";
-
-                        HttpResponseMessage response = await client.GetAsync(downloadLink);
-
-                        if (response.IsSuccessStatusCode)
+                        using (Stream contentStream = await response.Content.ReadAsStreamAsync())
                         {
-                            LogSystem.Log($"Server Responded With: {response.StatusCode} {response.ReasonPhrase} {response.Headers.Date}");
-                            using (Stream contentStream = await response.Content.ReadAsStreamAsync())
+                            using (FileStream fileStream = File.Create(dest))
                             {
-                                using (FileStream fileStream = File.Create(dest))
-                                {
-                                    await contentStream.CopyToAsync(fileStream);
-                                    LogSystem.Log($"Downloaded {dest}", "Download System");
-                                }
+                                await contentStream.CopyToAsync(fileStream);
+                                LogSystem.Log($"[{dest}] Server Responded With: {response.StatusCode} {response.ReasonPhrase} {response.Headers.Date}", "Download System");
                             }
                         }
-                        else
-                        {
-                            LogSystem.ReportError($"Error downloading {dest} | {response.StatusCode}", "Download System");
-                        }
                     }
+                    else
+                    {
+                        LogSystem.ReportError($"Error downloading {dest} | {response.StatusCode}", "Download System");
+                    }
+                    response.Dispose();
                 });
 
                 downloadTask.Wait();

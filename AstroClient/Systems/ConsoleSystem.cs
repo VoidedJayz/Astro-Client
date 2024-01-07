@@ -40,7 +40,16 @@ namespace AstroClient.Systems
             Console.SetCursorPosition(27, Console.CursorTop);
             Console.WriteLine(text);
         }
+        public static string CenterTextV2(string text)
+        {
+            var consoleWidth = Console.WindowWidth;
+            if (text.Length >= consoleWidth)
+                return text;
 
+            int padding = (consoleWidth - text.Length) / 2;
+            string centeredText = new string(' ', padding) + text;
+            return centeredText;
+        }
         public static async Task KeepWindowSize()
         {
             while (true)
@@ -50,7 +59,6 @@ namespace AstroClient.Systems
                 await Task.Delay(50);
             }
         }
-
         public static void GenerateOption(MenuOption options, int pos = 27)
         {
             // variables
@@ -67,7 +75,7 @@ namespace AstroClient.Systems
             if (matchMenu == true)
             {
                 Console.SetCursorPosition(pos, Console.CursorTop);
-                Console.Write("║");
+                Console.Write("│");
             }
             SetColor(color);
             Colorful.Console.Write(" [ ");
@@ -81,9 +89,9 @@ namespace AstroClient.Systems
                 if (matchMenu == true)
                 {
                     var old = Console.CursorLeft;
-                    Colorful.Console.SetCursorPosition(72, Console.CursorTop);
+                    Colorful.Console.SetCursorPosition(68, Console.CursorTop);
                     SetColor(Color.DeepPink);
-                    Colorful.Console.Write("║");
+                    Colorful.Console.Write("│");
                     SetColor(Color.LightGray);
                     Colorful.Console.SetCursorPosition(old, Console.CursorTop);
                 }
@@ -98,7 +106,7 @@ namespace AstroClient.Systems
                     var old = Console.CursorLeft;
                     Colorful.Console.SetCursorPosition(70, Console.CursorTop);
                     SetColor(Color.DeepPink);
-                    Colorful.Console.Write("║");
+                    Colorful.Console.Write("│");
                     SetColor(Color.LightGray);
                     Colorful.Console.SetCursorPosition(old, Console.CursorTop);
                 }
@@ -107,6 +115,7 @@ namespace AstroClient.Systems
                 Colorful.Console.Write(warning);
             }
             SetColor(originalConsoleColor);
+            LogSystem.Log($"Menu option generated for {Option}");
         }
         public static void AppArt()
         {

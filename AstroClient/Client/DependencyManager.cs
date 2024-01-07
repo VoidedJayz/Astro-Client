@@ -15,11 +15,14 @@ namespace AstroClient.Client
         public static int MissingCount = 0;
         public static bool ColorfulExists = false;
         public static string LastDependencyChecked = "";
+        public static HttpClient client = new HttpClient();
+        public static Dictionary<string, string> awaitingUpdates = new Dictionary<string, string>();
 
         public static void CheckDependencies()
         {
             try
             {
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 LogSystem.Log("Checking Dependencies..");
                 if (!FileSystem.DirectoryExists("MenuMusic"))
                 {
@@ -28,59 +31,67 @@ namespace AstroClient.Client
 
                 int index = 1;
                 StringBuilder outputBuilder = new StringBuilder();
-                Console.WriteLine("Checking Dependencies..");
-                foreach (KeyValuePair<string, string> dependency in DownloadSystem.dependencies)
+                outputBuilder.AppendLine("┌─────────────────────────────────────────────────────────────────────────────────┐");
+                LogSystem.Log("┌─────────────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine("Checking Dependencies [Server Side]..");
+                using (ProgressBar progress = new())
                 {
-                    string fileName = Path.GetFileName(dependency.Key);
-                    if (fileName == null)
+                    progress.Report(0);
+                    foreach (KeyValuePair<string, string> dependency in DownloadSystem.dependencies)
                     {
-                        continue;
-                    }
-                    if (fileName == "Colorful.Console.dll")
-                    {
-                        ColorfulExists = true;
-                        continue;
-                    }
-                    LastDependencyChecked = fileName;
-                    bool fileExists = FileSystem.FileExists(dependency.Key);
-                    DateTime localLastModified = DateTime.MinValue;
-                    DateTime serverLastModified = DateTime.MinValue;
-                    (localLastModified, serverLastModified) = GetLocalAndServerLastModified(dependency.Key, dependency.Value);
-                    bool isOutdated = fileExists && IsLocalFileVersionOutdated(localLastModified, serverLastModified);
-
-                    string status = "";
-                    if (!fileExists)
-                    {
-                        status = "Not Found";
-                        MissingCount++;
-                        DownloadDependency(dependency.Key, dependency.Value, serverLastModified);
-                    }
-                    else if (isOutdated)
-                    {
-                        status = "Outdated  ";
-                        UpdatedCount++;
-                        DownloadDependency(dependency.Key, dependency.Value, serverLastModified);
-                    }
-                    else
-                    {
-                        status = "Up To Date";
+                        string fileName = Path.GetFileName(dependency.Key);
+                        if (fileName == null)
+                        {
+                            continue;
+                        }
                         if (fileName == "Colorful.Console.dll")
                         {
-                            status = "Skipped ";
+                            ColorfulExists = true;
+                            continue;
                         }
+                        LastDependencyChecked = fileName;
+                        bool fileExists = FileSystem.FileExists(dependency.Key);
+                        DateTime localLastModified = DateTime.MinValue;
+                        DateTime serverLastModified = DateTime.MinValue;
+                        (localLastModified, serverLastModified) = Task.Run(() => GetLocalAndServerLastModifiedAsync(dependency.Key, dependency.Value)).Result;
+                        bool isOutdated = IsLocalFileVersionOutdated(localLastModified, serverLastModified);
+
+                        string status = "";
+                        if (!fileExists)
+                        {
+                            status = "Not Found";
+                            MissingCount++;
+                            DownloadDependency(dependency.Key, dependency.Value, serverLastModified);
+                        }
+                        else if (isOutdated)
+                        {
+                            status = "Outdated  ";
+                            UpdatedCount++;
+                            DownloadDependency(dependency.Key, dependency.Value, serverLastModified);
+                        }
+                        else
+                        {
+                            status = "Up To Date";
+                            if (fileName == "Colorful.Console.dll")
+                            {
+                                status = "Skipped ";
+                            }
+                        }
+                        var i = index++;
+                        var s = $"│ {i,2} │ {Truncate(fileName, 24),-24} │ {status,-10} │ Local: {localLastModified.ToString("MM-dd-yy") + $" │ Server: {serverLastModified.ToString("MM-dd-yy")}",-10} │";
+
+                        outputBuilder.AppendLine(s);
+                        LogSystem.Log(s);
+                        progress.Report((double)index / DownloadSystem.dependencies.Count);
                     }
-                    var i = index++;
-                    var s = $"[ {i,2} ] {Truncate(fileName, 24),-24} │ {status,-10} │ Local: {localLastModified.ToString("MM-dd-yy") + $" | Server: {serverLastModified.ToString("MM-dd-yy")}",-10} |";
-
-                    outputBuilder.AppendLine(s);
-                    LogSystem.Log(s);
                 }
-
+                outputBuilder.AppendLine("└─────────────────────────────────────────────────────────────────────────────────┘");
+                LogSystem.Log("└─────────────────────────────────────────────────────────────────────────────────┘");
                 string output = outputBuilder.ToString();
                 Console.Clear();
                 if (ColorfulExists)
                 {
-                    Colorful.Console.WriteWithGradient(output + "\n", Color.BlueViolet, Color.White, 10);
+                    Colorful.Console.WriteWithGradient(output, Color.BlueViolet, Color.White, 10);
                 }
                 else
                 {
@@ -119,7 +130,7 @@ namespace AstroClient.Client
             if (string.IsNullOrEmpty(value)) return value;
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
-        public static (DateTime localLastModified, DateTime serverLastModified) GetLocalAndServerLastModified(string localFilePath, string serverUrl)
+        public static async Task<(DateTime localLastModified, DateTime serverLastModified)> GetLocalAndServerLastModifiedAsync(string localFilePath, string serverUrl)
         {
             DateTime localLastModified = DateTime.MinValue;
             DateTime serverLastModified = DateTime.MinValue;
@@ -128,10 +139,9 @@ namespace AstroClient.Client
             {
                 using (var client = new HttpClient())
                 {
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                     string downloadLink = $"{serverUrl}?accessKey={DownloadSystem.accessKey}";
 
-                    HttpResponseMessage response = client.GetAsync(downloadLink).Result;
+                    HttpResponseMessage response = await client.GetAsync(downloadLink);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -151,22 +161,24 @@ namespace AstroClient.Client
                     {
                         LogSystem.ReportError($"Error accessing server file: {response.StatusCode}");
                     }
+                    response.Dispose();
                 }
             }
             catch (Exception ex)
             {
-                LogSystem.ReportError($"Error in GetLocalAndServerLastModified: {ex}");
+                LogSystem.ReportError($"Error in GetLocalAndServerLastModifiedAsync: {ex}");
             }
 
             return (localLastModified, serverLastModified);
         }
 
 
+
         public static bool IsLocalFileVersionOutdated(DateTime local, DateTime server)
         {
             try
             {
-                if (local > server)
+                if (local < server)
                 {
                     return true;
                 }
@@ -186,11 +198,9 @@ namespace AstroClient.Client
             // Simple Fix for timestamps
             try
             {
-                // Append the access key to the URL
                 DownloadSystem.ServerDownload(value, key);
-                File.SetLastWriteTime(key, timestamp);
+                File.SetLastWriteTimeUtc(key, timestamp);
 
-                UpdatedCount++;
             }
             catch (Exception ex)
             {

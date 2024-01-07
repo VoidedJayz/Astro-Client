@@ -14,7 +14,7 @@ namespace AstroClient.Client
 {
     internal class UpdateManager
     {
-        public static Version Version = new Version("3.1.9");
+        public static Version Version = new Version("3.2.1");
 
         public static void CheckAppUpdates()
         {

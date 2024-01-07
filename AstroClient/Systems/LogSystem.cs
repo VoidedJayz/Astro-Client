@@ -48,30 +48,31 @@ namespace AstroClient.Systems
             }
 
             string htmlHeader = "<!DOCTYPE html>\n<html>\n<head>\n" +
-                "<style>\n" +
-                "  body {\n" +
-                "    background-color: black;\n" +
-                "    font-family: 'Segoe UI', sans-serif;\n" +
-                "    font-size: 16px;\n" +
-                "  }\n" +
-                "  .timestamp {\n" +
-                "    color: rgb(173, 216, 230);\n" +
-                "  }\n" +
-                "  .elapsed {\n" +
-                "    color: rgb(255, 247, 200);\n" +
-                "  }\n" +
-                "  .log-class {\n" +
-                "    color: rgb(0, 200, 155);\n" +
-                "  }\n" +
-                "  .log {\n" +
-                "    color: darkgray;\n" +
-                "  }\n" +
-                "  .error {\n" +
-                "    color: rgb(255, 0, 0);\n" +
-                "  }\n" +
-                "</style>\n" +
-                "</head>\n<body>\n" +
-                "<pre>";
+                            "<style>\n" +
+                            "  body {\n" +
+                            "    background-color: black;\n" +
+                            "    font-family: 'Segoe UI', sans-serif;\n" +
+                            "    font-size: 16px;\n" +
+                            "  }\n" +
+                            "  .timestamp {\n" +
+                            "    color: rgb(173, 216, 230);\n" +
+                            "  }\n" +
+                            "  .elapsed {\n" +
+                            "    color: rgb(255, 247, 200);\n" +
+                            "  }\n" +
+                            "  .log-class {\n" +
+                            "    color: rgb(0, 200, 155);\n" +
+                            "  }\n" +
+                            "  .log {\n" +
+                            "    color: darkgray;\n" +
+                            "  }\n" +
+                            "  .error {\n" +
+                            "    color: rgb(255, 0, 0);\n" +
+                            "  }\n" +
+                            "</style>\n" +
+                            "</head>\n<body>\n" +
+                            "<pre>";
+
 
             FileSystem.WriteAllText(GetLogFilePath("ApplicationLog-Latest.html"), htmlHeader);
 
@@ -81,25 +82,48 @@ namespace AstroClient.Systems
 
         public static void Log(string message, string overrideClass = null)
         {
-            string callingClass = overrideClass ?? GetCallingClassName();
+            string getClass()
+            {
+                if (overrideClass != null)
+                {
+                    return overrideClass;
+                }
+                else
+                {
+                    return GetCallingClassName();
+                }
+            }
+            string callingClass = getClass();
             string color = GetSoftColorForClass(callingClass);
             string logEntry = $"<span class='timestamp'>[{DateTime.Now:hh:mm tt}]</span> " +
-                              $"<span class='elapsed'>[Elapsed: {FormatElapsedTime(stopwatch.Elapsed)}]</span>: " +
-                              $"<span class='log-class' style='color: {color}'>[{callingClass}]</span> " +
-                              $"<span class='log'>- {message}</span>";
+                              $"<span class='elapsed'>[Elapsed: {FormatElapsedTime(stopwatch.Elapsed)}]</span> " +
+                              $"<span class='log'>- {message}</span>" +
+                              $"<span class='log-class' style='color: {color}; float: right;'>[{callingClass}]</span> ";
             logQueue.Enqueue(logEntry);
         }
 
         public static void ReportError(string errorMessage, string overrideClass = null)
         {
-            string callingClass = overrideClass ?? GetCallingClassName();
+            string getClass()
+            {
+                if (overrideClass != null)
+                {
+                    return overrideClass;
+                }
+                else
+                {
+                    return GetCallingClassName();
+                }
+            }
+            string callingClass = getClass();
             string color = GetSoftColorForClass(callingClass);
             string errorLogEntry = $"<span class='timestamp'>[{DateTime.Now:hh:mm tt}]</span> " +
-                                   $"<span class='elapsed'>[Elapsed: {FormatElapsedTime(stopwatch.Elapsed)}]</span>: " +
-                                   $"<span class='log-class' style='color: {color}'>[{callingClass}]</span> " +
-                                   $"<span class='error'>- [FATAL ERROR] {errorMessage}</span>";
+                                   $"<span class='elapsed'>[Elapsed: {FormatElapsedTime(stopwatch.Elapsed)}]</span> " +
+                                   $"<span class='error'>- [ERROR] {errorMessage}</span>" +
+                                   $"<span class='log-class' style='color: {color}; float: right;'>[{callingClass}]</span> ";
             logQueue.Enqueue(errorLogEntry);
         }
+
 
         private static void CreateLogDirectory()
         {

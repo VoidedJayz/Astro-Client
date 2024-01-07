@@ -19,6 +19,12 @@ namespace AstroClient
             public bool? matchMenu { get; set; }
             public bool? newLine { get; set; }
         }
+        public class MenuOptionV2
+        {
+            public string FeatureName { get; set; } = "???";
+            public string FeatureDescription { get; set; } = "???";
+            public Color FeatureColor { get; set; } = Color.White;
+        }
         public class ServerData
         {
             public string version { get; set; }

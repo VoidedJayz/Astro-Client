@@ -130,6 +130,10 @@ namespace AstroClient.Client
             library.AddSong("Montagem Mysterious Game by LXNGVX", "MenuMusic\\Montagem_Mysterious_Game.mp3");
             library.AddSong("Stuck Inside by Black Gryph0n", "MenuMusic\\Stuck_Inside.mp3");
             library.AddSong("Numb by Linkin Park (B.E.D & Noise Machine Remix)", "MenuMusic\\Numb.mp3");
+            library.AddSong("My Bad! by Grioten, Ethan Ross, Sayfalse, SaintRxse", "MenuMusic\\MYBAD.mp3");
+            library.AddSong("The Details In The Devil by JT Music", "MenuMusic\\TheDetailsInTheDevil.mp3");
+            library.AddSong("Another Five Nights by JT Music", "MenuMusic\\AnotherFiveNights.mp3");
+            library.AddSong("Metamorphosis by INTERWORLD", "MenuMusic\\METAMORPHOSIS.mp3");
         }
         private static void CheckPrioritySong()
         {

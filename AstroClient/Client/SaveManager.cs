@@ -54,27 +54,34 @@ namespace AstroClient.Client
                 LogSystem.ReportError("Error starting save system: " + ex);
             }
         }
-        public static GameData ExtractGameData(string jsonData)
+        public static List<string> GetStats(string save)
         {
             try
             {
-                LogSystem.Log("Extracting Game Data...");
-                var data = JsonConvert.DeserializeObject<dynamic>(jsonData);
-
-                var gameData = new GameData
+                LogSystem.Log("Getting Save Stats...");
+                var loadedSave = Decrypt(Password, File.ReadAllBytes(GameSavePath + saveMap[save]));
+                var data = JsonConvert.DeserializeObject<dynamic>(loadedSave);
+                // save OG Data
+                var OG_CoinCount = data.GroupCredits.value;
+                var OG_TimeLeft = data.DeadlineTime.value;
+                var OG_QuotaAmount = data.ProfitQuota.value;
+                LogSystem.Log("Save Stats: " + OG_CoinCount + " " + OG_TimeLeft + " " + OG_QuotaAmount);
+                return new List<string>()
                 {
-                    CoinCount = data.GroupCredits.value,
-                    TimeLeft = data.DeadlineTime.value,
-                    QuotaAmount = data.ProfitQuota.value,
+                    OG_CoinCount.ToString(),
+                    OG_TimeLeft.ToString(),
+                    OG_QuotaAmount.ToString()
                 };
-
-                return gameData;
             }
             catch (Exception ex)
             {
-                ConsoleSystem.AnimatedText("Error extracting game data. Check logs for details.");
-                LogSystem.ReportError("Error extracting game data: " + ex);
-                return null; // Handle the error accordingly
+                LogSystem.ReportError("Error getting save stats: " + ex);
+                return new List<string>()
+                {
+                    "???",
+                    "???",
+                    "???"
+                };
             }
         }
         public static void ModifyGameData(string SaveToModify, GameData newData)

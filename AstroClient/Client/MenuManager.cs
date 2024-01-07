@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static AstroClient.Objects;
 using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace AstroClient.Client
 {
@@ -140,84 +141,47 @@ namespace AstroClient.Client
                 Console.WriteLine();
                 ConsoleSystem.AnimatedText(msg.PadLeft(Console.WindowWidth / 2 + msg.Length / 2));
                 ConsoleSystem.SetColor(Color.DeepPink);
-                ConsoleSystem.CenterText("╔════ Mods ══════════════════════════════════╗");
-                ConsoleSystem.GenerateOption(new MenuOption()
+                ConsoleSystem.CenterText($"┌──── Mods ──────────────────────────────┐");
+                List<MenuOption> options = new List<MenuOption>
                 {
-                    option = "Install Mods",
-                    identity = "1",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
+                    new MenuOption() { option = "Install Mods", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption() { option = "Remove Mods", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption() { option = "Extra Mods", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true }
+                };
+
+                foreach (MenuOption option in options)
                 {
-                    option = "Remove Mods",
-                    identity = "2",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
+                    ConsoleSystem.GenerateOption(option);
+                }
+                ConsoleSystem.CenterText("└────────────────────────────────────────┘");
+                ConsoleSystem.CenterText("┌──── Util ──────────────────────────────┐");
+                List<MenuOption> utilOptions = new List<MenuOption>
                 {
-                    option = "Extra Mods",
-                    identity = "3",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝");
-                ConsoleSystem.CenterText("╔════ Util ══════════════════════════════════╗");
-                ConsoleSystem.GenerateOption(new MenuOption()
+                    new MenuOption() { option = "Start / Stop Lethal Company", identity = "4", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption() { option = "Open Lethal Company Folder", identity = "5", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption() { option = "Backup Old Mods", identity = "6", color = Color.BlueViolet, matchMenu = true, newLine = true }
+                };
+
+                foreach (MenuOption option in utilOptions)
                 {
-                    option = "Start / Stop Lethal Company",
-                    identity = "4",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
+                    ConsoleSystem.GenerateOption(option);
+                }
+
+                ConsoleSystem.CenterText("└────────────────────────────────────────┘");
+                ConsoleSystem.CenterText("┌──── App ───────────────────────────────┐");
+                List<MenuOption> appOptions = new List<MenuOption>
                 {
-                    option = "Open Lethal Company Folder",
-                    identity = "5",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
+                    new MenuOption() { option = "Force Update Astro Boyz", identity = "7", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption() { option = "View Change Log", identity = "8", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption() { option = "Settings", identity = "9", color = Color.BlueViolet, matchMenu = true, newLine = true }
+                };
+
+                foreach (MenuOption option in appOptions)
                 {
-                    option = "Backup Old Mods",
-                    identity = "6",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝");
-                ConsoleSystem.CenterText("╔════ App ═══════════════════════════════════╗");
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = "Force Update Astro Boyz",
-                    identity = "7",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = "View Change Log",
-                    identity = "8",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = "Settings",
-                    identity = "9",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n");
+                    ConsoleSystem.GenerateOption(option);
+                }
+
+                ConsoleSystem.CenterText("└────────────────────────────────────────┘");
             }
             catch (Exception ex)
             {
@@ -235,8 +199,6 @@ namespace AstroClient.Client
             Console.Clear();
             ConsoleSystem.AppArt();
             ConsoleSystem.AnimatedText(ServerManager.currentChangelog);
-            Console.SetWindowSize(100, 30);
-            Console.SetBufferSize(100, 30);
             Console.WriteLine();
             ConsoleSystem.AnimatedText("Press any key to continue...");
             Console.ReadKey();
@@ -252,49 +214,22 @@ namespace AstroClient.Client
                 ConsoleSystem.AppArt();
                 ConsoleSystem.SetColor(Color.DeepPink);
                 Console.WriteLine();
-                ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
+                ConsoleSystem.CenterText("┌────────────────────────────────────────┐");
+                List<MenuOption> menuOptions = new List<MenuOption>
+                {
+                    new MenuOption { option = "Astro Menu", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption { option = "Brutal Company", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption { option = "Retro Shading", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption { option = "Saves Manager", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption { option = "Back", identity = "4", color = Color.BlueViolet, matchMenu = true, newLine = true }
+                };
 
-                ConsoleSystem.GenerateOption(new MenuOption()
+                foreach (var menuOption in menuOptions)
                 {
-                    option = $"Astro Menu",
-                    identity = "0",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = $"Brutal Company",
-                    identity = "1",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = $"Retro Shading",
-                    identity = "2",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = $"Saves Manager",
-                    identity = "3",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = $"Back",
-                    identity = "4",
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n\n");
+                    ConsoleSystem.GenerateOption(menuOption);
+                }
+
+                ConsoleSystem.CenterText("└────────────────────────────────────────┘\n");
 
                 var currOption = Console.ReadLine();
                 Console.WriteLine("");
@@ -371,41 +306,18 @@ namespace AstroClient.Client
             ConsoleSystem.AppArt();
             ConsoleSystem.SetColor(Color.DeepPink);
             Console.WriteLine();
-            ConsoleSystem.CenterText("Pick a save file.");
-            ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
-            ConsoleSystem.GenerateOption(new MenuOption()
-            {
-                option = $"Save 1",
-                identity = "1",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.GenerateOption(new MenuOption()
-            {
-                option = $"Save 2",
-                identity = "2",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.GenerateOption(new MenuOption()
-            {
-                option = $"Save 3",
-                identity = "3",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.GenerateOption(new MenuOption()
-            {
-                option = $"Back",
-                identity = "4",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n\n");
+            var save1 = SaveManager.GetStats("Save 1");
+            var save2 = SaveManager.GetStats("Save 2");
+            var save3 = SaveManager.GetStats("Save 3");
+            Colorful.Console.WriteLine(ConsoleSystem.CenterTextV2("Pick a save file. To pick one, just type the number."));
+            StringBuilder outputBuilder = new StringBuilder();
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2("┌────────────────────────────────────────────────────────────────────┐"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 1 │ {$"Credits: {save1[0]}",-14} │ Deadline: {save1[1],-10} │ Quota: {save1[2],-10} │"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 2 │ {$"Credits: {save2[0]}",-14} │ Deadline: {save2[1],-10} │ Quota: {save2[2],-10} │"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 3 │ {$"Credits: {save3[0]}",-14} │ Deadline: {save3[1],-10} │ Quota: {save3[2],-10} │"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2("└────────────────────────────────────────────────────────────────────┘"));
+            string output = outputBuilder.ToString();
+            Colorful.Console.WriteWithGradient(output, Color.BlueViolet, Color.Wheat, 10);
             var currOption = Console.ReadLine();
             Console.WriteLine();
             LogSystem.Log($"User selected option {currOption}");
@@ -543,40 +455,23 @@ namespace AstroClient.Client
             ConsoleSystem.SetColor(Color.DeepPink);
             Console.WriteLine();
             ConsoleSystem.CenterText("Select the data you wish to modify");
-            ConsoleSystem.CenterText($"╔════ {Save} ════════════════════════════════╗");
-            ConsoleSystem.GenerateOption(new MenuOption()
+            ConsoleSystem.CenterText($"┌──── {Save} ────────────────────────────┐");
+            List<MenuOption> menuOptions = new List<MenuOption>
             {
-                option = $"Credits / Currency",
-                identity = "0",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.GenerateOption(new MenuOption()
+                new MenuOption { option = "Credits / Currency", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Time Left Until Quota", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Quota Amount", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Back", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true }
+            };
+
+            foreach (var menuOption in menuOptions)
             {
-                option = $"Time Left Until Quota",
-                identity = "1",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.GenerateOption(new MenuOption()
-            {
-                option = $"Quota Amount",
-                identity = "2",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.GenerateOption(new MenuOption()
-            {
-                option = $"Back",
-                identity = "3",
-                color = Color.BlueViolet,
-                matchMenu = true,
-                newLine = true
-            });
-            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n\n");
+                ConsoleSystem.GenerateOption(menuOption);
+            }
+
+            string updatedText = "└────────────────────────────────────────┘\n\n";
+            ConsoleSystem.CenterText(updatedText);
+
             var currOption = Console.ReadLine();
             Console.WriteLine();
             switch (currOption)
@@ -664,22 +559,24 @@ namespace AstroClient.Client
             ConsoleSystem.CenterText($"Custom Path: {ConfigSystem.loadedConfig.customPath ?? "Steam"}");
             ConsoleSystem.SetColor(Color.DeepPink);
             Console.WriteLine();
-            ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
+            ConsoleSystem.CenterText("┌────────────────────────────────────────┐");
 
-            string[] options = { "Auto Update", "Allow Menu Music", "Favorite Song", "Music Volume", "Text Animations", "Open Logs", "Back" };
-            for (int i = 0; i < options.Length; i++)
+            List<MenuOption> menuOptions = new List<MenuOption>
             {
-                ConsoleSystem.GenerateOption(new MenuOption()
-                {
-                    option = options[i],
-                    identity = i.ToString(),
-                    color = Color.BlueViolet,
-                    matchMenu = true,
-                    newLine = true
-                });
-                LogSystem.Log($"Menu option generated for {options[i]}");
+                new MenuOption { option = "Auto Update", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Allow Menu Music", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Favorite Song", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Music Volume", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Text Animations", identity = "4", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Open Logs", identity = "5", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Back", identity = "6", color = Color.BlueViolet, matchMenu = true, newLine = true }
+            };
+
+            foreach (var menuOption in menuOptions)
+            {
+                ConsoleSystem.GenerateOption(menuOption);
             }
-            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n");
+            ConsoleSystem.CenterText("└────────────────────────────────────────┘\n");
 
             try
             {
@@ -829,7 +726,7 @@ namespace AstroClient.Client
             }
 
             ConsoleSystem.SetColor(Color.DeepPink);
-            ConsoleSystem.CenterText("╔════════════════════════════════════════════╗");
+            ConsoleSystem.CenterText("┌────────────────────────────────────────┐");
 
             var i = 0;
             foreach (var song in MusicManager.library.GetAllSongs())
@@ -862,7 +759,7 @@ namespace AstroClient.Client
                 matchMenu = true,
                 newLine = true
             });
-            ConsoleSystem.CenterText("╚════════════════════════════════════════════╝\n");
+            ConsoleSystem.CenterText("└────────────────────────────────────────┘\n");
 
             try
             {
