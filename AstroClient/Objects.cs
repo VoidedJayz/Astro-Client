@@ -19,6 +19,16 @@ namespace AstroClient
             public bool? matchMenu { get; set; }
             public bool? newLine { get; set; }
         }
+        public class WebSocketObjects
+        {
+            public string Message { get; set; } = "???";
+            public bool GodMode { get; set; } = false;
+            public bool InfiniteStamina { get; set; } = false;
+            public int daysUntilDeadline { get; set; } = 0;
+            public int profitQuota { get; set; } = 0;
+            public int totalScrapValue { get; set; } = 0;
+            public bool inMenus { get; set; } = true;
+        }
         public class MenuOptionV2
         {
             public string FeatureName { get; set; } = "???";

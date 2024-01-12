@@ -25,8 +25,7 @@ namespace AstroClient.Client
                     State = UpdateManager.Version.ToString(),
                     Assets = new Assets()
                     {
-                        LargeImageKey = "clone",
-                        SmallImageKey = "idle",
+                        LargeImageKey = "astrov2",
 
                     },
                 });
@@ -47,8 +46,7 @@ namespace AstroClient.Client
                     State = UpdateManager.Version.ToString(),
                     Assets = new Assets()
                     {
-                        LargeImageKey = "clone",
-                        SmallImageKey = icon,
+                        LargeImageKey = "astrov2",
                     },
                 });
             }

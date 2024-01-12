@@ -1,5 +1,6 @@
 ﻿using AstroClient.Systems;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Drawing;
 using System.Net;
 using System.Net.Http;
@@ -18,10 +19,21 @@ namespace AstroClient.Client
         public static HttpClient client = new HttpClient();
         public static Dictionary<string, string> awaitingUpdates = new Dictionary<string, string>();
 
-        public static void CheckDependencies()
+        public static void Start()
         {
+            if (Program.DebuggerMode)
+            {
+                return;
+            }
             try
             {
+                var completionTime = Stopwatch.StartNew();
+                if (ServerManager.useSecureCDN)
+                {
+                    Console.WriteLine("Secure CDN is activated! All checks might take longer than usual.");
+                    LogSystem.Log("Secure CDN is activated! All checks might take longer than usual.");
+                }
+                Console.WriteLine("Checking Dependencies [Server Side]..");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 LogSystem.Log("Checking Dependencies..");
                 if (!FileSystem.DirectoryExists("MenuMusic"))
@@ -32,8 +44,6 @@ namespace AstroClient.Client
                 int index = 1;
                 StringBuilder outputBuilder = new StringBuilder();
                 outputBuilder.AppendLine("┌─────────────────────────────────────────────────────────────────────────────────┐");
-                LogSystem.Log("┌─────────────────────────────────────────────────────────────────────────────────┐");
-                Console.WriteLine("Checking Dependencies [Server Side]..");
                 using (ProgressBar progress = new())
                 {
                     progress.Report(0);
@@ -44,7 +54,7 @@ namespace AstroClient.Client
                         {
                             continue;
                         }
-                        if (fileName == "Colorful.Console.dll")
+                        if (fileName == "Colorful.Console.dll" || fileName == "Newtonsoft.Json.dll")
                         {
                             ColorfulExists = true;
                             continue;
@@ -81,12 +91,11 @@ namespace AstroClient.Client
                         var s = $"│ {i,2} │ {Truncate(fileName, 24),-24} │ {status,-10} │ Local: {localLastModified.ToString("MM-dd-yy") + $" │ Server: {serverLastModified.ToString("MM-dd-yy")}",-10} │";
 
                         outputBuilder.AppendLine(s);
-                        LogSystem.Log(s);
+                        LogSystem.Log($"{Truncate(fileName, 24),-24} {status,-10} Local: {localLastModified.ToString("MM-dd-yy") + $" Server: {serverLastModified.ToString("MM-dd-yy")}",-10}");
                         progress.Report((double)index / DownloadSystem.dependencies.Count);
                     }
                 }
                 outputBuilder.AppendLine("└─────────────────────────────────────────────────────────────────────────────────┘");
-                LogSystem.Log("└─────────────────────────────────────────────────────────────────────────────────┘");
                 string output = outputBuilder.ToString();
                 Console.Clear();
                 if (ColorfulExists)
@@ -97,20 +106,32 @@ namespace AstroClient.Client
                 {
                     Console.WriteLine(output);
                 }
-
-                LogSystem.Log("Done checking dependencies.");
+                completionTime.Stop();
+                LogSystem.Log($"Done checking dependencies. Completed in {Math.Floor(completionTime.Elapsed.TotalSeconds)} Seconds.");
                 LogSystem.Log($"Updated {UpdatedCount} dependencies.");
                 LogSystem.Log($"Downloaded Missing {MissingCount} dependencies.");
                 if (ColorfulExists)
                 {
-                    Colorful.Console.WriteLine($"Updated {UpdatedCount} dependencies.");
-                    Colorful.Console.WriteLine($"Downloaded Missing {MissingCount} dependencies.");
-                    Colorful.Console.WriteLine("Press any key to continue..");
+                    if (UpdatedCount > 0)
+                    {
+                        Colorful.Console.WriteLine($"Updated {UpdatedCount} dependencies.");
+                    }
+                    if (MissingCount > 0)
+                    {
+                        Colorful.Console.WriteLine($"Downloaded {MissingCount} Missing dependencies.");
+                    }
+                    Colorful.Console.WriteLine($"Took {Math.Floor(completionTime.Elapsed.TotalSeconds)} Seconds. Press any key to continue..");
                 }
                 else
                 {
-                    Console.WriteLine($"Updated {UpdatedCount} dependencies.");
-                    Console.WriteLine($"Downloaded {MissingCount} Missing dependencies.");
+                    if (UpdatedCount > 0)
+                    {
+                        Console.WriteLine($"Updated {UpdatedCount} dependencies.");
+                    }
+                    if (MissingCount > 0)
+                    {
+                        Console.WriteLine($"Downloaded {MissingCount} Missing dependencies.");
+                    }
                     Console.WriteLine("Press any key to continue..");
                 }
                 Console.ReadKey();
@@ -124,7 +145,6 @@ namespace AstroClient.Client
                 LogSystem.ReportError($"Error in CheckDependencies: {ex}");
             }
         }
-
         public static string Truncate(string value, int maxLength)
         {
             if (string.IsNullOrEmpty(value)) return value;
@@ -139,9 +159,17 @@ namespace AstroClient.Client
             {
                 using (var client = new HttpClient())
                 {
-                    string downloadLink = $"{serverUrl}?accessKey={DownloadSystem.accessKey}";
+                    string downloadlink;
+                    if (ServerManager.useSecureCDN)
+                    {
+                        downloadlink = $"{serverUrl}?accessKey={DownloadSystem.accessKey}";
+                    }
+                    else
+                    {
+                        downloadlink = serverUrl;
+                    }
 
-                    HttpResponseMessage response = await client.GetAsync(downloadLink);
+                    HttpResponseMessage response = await client.GetAsync(downloadlink);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -171,9 +199,6 @@ namespace AstroClient.Client
 
             return (localLastModified, serverLastModified);
         }
-
-
-
         public static bool IsLocalFileVersionOutdated(DateTime local, DateTime server)
         {
             try
@@ -190,9 +215,6 @@ namespace AstroClient.Client
 
             return false;
         }
-
-
-
         private static void DownloadDependency(string key, string value, DateTime timestamp)
         {
             // Simple Fix for timestamps

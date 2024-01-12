@@ -32,6 +32,8 @@ namespace AstroClient.Client
         private const int WS_MAXIMIZEBOX = 0x10000;
         private const int WS_SIZEBOX = 0x40000;
         private const int SB_BOTH = 3;
+        private const int CTRL_CLOSE_EVENT = 2;
+        private const int CTRL_C_EVENT = 0;
 
         public static void Start()
         {
@@ -68,6 +70,8 @@ namespace AstroClient.Client
                     ShowScrollBar(consoleWindow, SB_BOTH, false);
                     LogSystem.Log("Scrollbars hidden.");
                 }
+                LogSystem.Log("Console control handler set.");
+
             }
             catch (Exception ex)
             {

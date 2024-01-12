@@ -13,29 +13,30 @@ namespace AstroClient.Client
     {
         public static string endPoint = "https://api.astroswrld.club/v1/get-info";
         public static string? currentStatus;
+        public static bool useSecureCDN = false;
         // Astro Data
         public static Version? latestVersion;
         public static Version? latestModpackVersion;
         public static string? currentChangelog;
         public static string? currentModpackChangelog;
 
-        public static void SetupData()
+        public static void Start()
         {
             try
             {
                 LogSystem.Log("Starting SetupData.");
-
                 ServerData data = GetServerData();
                 latestVersion = new Version(data.version);
                 currentChangelog = data.changelogs;
                 currentStatus = data.status;
                 latestModpackVersion = new Version(data.modpackVersion);
                 currentModpackChangelog = data.modpackChangelogs;
-
-                LogSystem.Log($"Astro data retrieved. Latest version: {latestVersion}, Status: {currentStatus}");
-                LogSystem.Log($"Astro Modpack data retrieved. Latest version: {latestModpackVersion}, Status: {currentStatus}");
-
-                if (currentStatus == "Offline")
+                if (currentStatus.ToLower().Contains("secure"))
+                {
+                    useSecureCDN = true;
+                    LogSystem.Log("Astro Server is requesting to use the secure CDN.");
+                }
+                if (currentStatus.ToLower().Contains("offline"))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Astro Server is currently offline. The application will close in 5s.");

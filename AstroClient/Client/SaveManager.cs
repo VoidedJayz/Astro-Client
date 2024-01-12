@@ -59,7 +59,7 @@ namespace AstroClient.Client
             try
             {
                 LogSystem.Log("Getting Save Stats...");
-                var loadedSave = Decrypt(Password, File.ReadAllBytes(GameSavePath + saveMap[save]));
+                var loadedSave = LCDecrypt(Password, File.ReadAllBytes(GameSavePath + saveMap[save]));
                 var data = JsonConvert.DeserializeObject<dynamic>(loadedSave);
                 // save OG Data
                 var OG_CoinCount = data.GroupCredits.value;
@@ -89,7 +89,7 @@ namespace AstroClient.Client
             try
             {
                 LogSystem.Log("Modifying Game Data...");
-                var loadedSave = Decrypt(Password, File.ReadAllBytes(GameSavePath + saveMap[SaveToModify]));
+                var loadedSave = LCDecrypt(Password, File.ReadAllBytes(GameSavePath + saveMap[SaveToModify]));
                 var data = JsonConvert.DeserializeObject<dynamic>(loadedSave);
                 // save OG Data
                 var OG_CoinCount = data.GroupCredits.value;
@@ -105,7 +105,7 @@ namespace AstroClient.Client
 
                 // Finish
                 var modifiedJsonData = JsonConvert.SerializeObject(data);
-                var encryptedData = Encrypt(Password, modifiedJsonData);
+                var encryptedData = LCEncrypt(Password, modifiedJsonData);
                 File.WriteAllBytes(GameSavePath + saveMap[SaveToModify], encryptedData);
                 LogSystem.Log("Game Data Modified!");
             }
@@ -217,7 +217,7 @@ namespace AstroClient.Client
                 LogSystem.ReportError("Error deleting all save data: " + ex);
             }
         }
-        private static string Decrypt(string password, byte[] data)
+        private static string LCDecrypt(string password, byte[] data)
         {
             LogSystem.Log("Decrypting Save Data...");
             try
@@ -253,7 +253,7 @@ namespace AstroClient.Client
                 return null; // Handle decryption error accordingly
             }
         }
-        private static byte[] Encrypt(string password, string data)
+        private static byte[] LCEncrypt(string password, string data)
         {
             LogSystem.Log("Encrypting Save Data...");
             try

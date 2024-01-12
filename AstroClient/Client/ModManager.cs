@@ -14,6 +14,8 @@ namespace AstroClient.Client
     internal class ModManager
     {
         public static Version? Version;
+        public static bool GodMode = false;
+        public static bool InfiniteStamina = false;
         public static void Start()
         {
             CheckMods();
@@ -93,7 +95,15 @@ namespace AstroClient.Client
             {
                 LogSystem.Log("Starting mod installation process.");
                 DiscordManager.UpdatePresence("cog", "Installing Mods");
-                CheckLethalCompany();
+                if (CheckLethalCompany())
+                {
+                    LogSystem.Log("Lethal Company is running. Disposing install operation.");
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("Lethal Company is running. Please close it before installing mods.");
+                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                    Console.ReadKey();
+                    return;
+                }
                 LogSystem.Log("Checked Lethal Company.");
 
                 if (CheckForExistingMods())
@@ -177,14 +187,21 @@ namespace AstroClient.Client
                 LogSystem.Log("Mod installation process finished.");
             }
         }
-
         public static void UninstallMods()
         {
             try
             {
                 LogSystem.Log("Starting mod removal process.");
                 DiscordManager.UpdatePresence("cog", "Removing Mods");
-                CheckLethalCompany();
+                if (CheckLethalCompany())
+                {
+                    LogSystem.Log("Lethal Company is running. Disposing removal operation.");
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("Lethal Company is running. Please close it before removing mods.");
+                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                    Console.ReadKey();
+                    return;
+                }
 
                 // Check For Currently Installed Modz
                 if (CheckForExistingMods() == true)
@@ -250,7 +267,15 @@ namespace AstroClient.Client
             {
                 LogSystem.Log("Starting mod backup process.");
                 DiscordManager.UpdatePresence("cog", "Backing Up Mods");
-                CheckLethalCompany();
+                if (CheckLethalCompany())
+                {
+                    LogSystem.Log("Lethal Company is running. Disposing backup operation.");
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("Lethal Company is running. Please close it before backing up mods.");
+                    ConsoleSystem.AnimatedText("Press any key to continue...");
+                    Console.ReadKey();
+                    return;
+                }
 
                 // Check For Currently Installed Modz
                 if (CheckForExistingMods() == true)
@@ -316,7 +341,15 @@ namespace AstroClient.Client
         public static void ProcessPlugin(string pluginName, bool state, string enabledPath, string disabledPath, string alreadyStateMessage)
         {
             LogSystem.Log($"{pluginName}: Start processing.");
-            CheckLethalCompany();
+            if (CheckLethalCompany())
+            {
+                LogSystem.Log($"{pluginName}: Lethal Company is running. Disposing operation.");
+                ConsoleSystem.SetColor(Color.DarkRed);
+                ConsoleSystem.AnimatedText($"{pluginName}: Lethal Company is running. Please close it before enabling or disabling this plugin.");
+                ConsoleSystem.AnimatedText("Press any key to continue...");
+                Console.ReadKey();
+                return;
+            }
 
             try
             {
@@ -374,7 +407,15 @@ namespace AstroClient.Client
         public static void RetroShading(bool state)
         {
             LogSystem.Log("Checking for existing shaders...");
-            CheckLethalCompany();
+            if (CheckLethalCompany())
+            {
+                LogSystem.Log("Lethal Company is running. Disposing operation.");
+                ConsoleSystem.SetColor(Color.DarkRed);
+                ConsoleSystem.AnimatedText("Lethal Company is running. Please close it before installing shaders.");
+                ConsoleSystem.AnimatedText("Press any key to continue...");
+                Console.ReadKey();
+                return;
+            }
 
             if (state)
             {
@@ -472,18 +513,14 @@ namespace AstroClient.Client
                 }
             }
         }
-        public static void CheckLethalCompany()
+        public static bool CheckLethalCompany()
         {
             Process[] lc = Process.GetProcessesByName("Lethal Company");
             if (lc.Length != 0)
             {
-                ConsoleSystem.SetColor(Color.DarkRed);
-                Console.Clear();
-                ConsoleSystem.AnimatedText("Lethal Company is currently running. Please close the game before continuing.\n");
-                ConsoleSystem.AnimatedText("Press any key to continue...");
-                Console.ReadKey();
-                CheckLethalCompany();
+                return true;
             }
+            return false;
         }
         public static bool CheckForExistingShaders()
         {

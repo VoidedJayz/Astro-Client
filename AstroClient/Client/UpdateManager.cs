@@ -14,10 +14,13 @@ namespace AstroClient.Client
 {
     internal class UpdateManager
     {
-        public static Version Version = new Version("3.2.1");
-
-        public static void CheckAppUpdates()
+        public static Version Version = new Version("3.2.7");
+        public static void Start()
         {
+            if (Program.DebuggerMode)
+            {
+                return;
+            }
             LogSystem.Log("Starting update check.");
             ConsoleSystem.UpdateArt();
             ConsoleSystem.SetColor(Color.Gold);
@@ -59,7 +62,7 @@ namespace AstroClient.Client
                 ConsoleSystem.AnimatedText("There is a modpack update available!");
                 ConsoleSystem.AnimatedText("We highly recommend you update the modpack using Astro.");
                 ConsoleSystem.AnimatedText("If you do not update the modpack, you will not be properly synced in game.");
-                ConsoleSystem.AnimatedText("These updates are extremely important for ptp syncing and bug fixes.");
+                ConsoleSystem.AnimatedText("These updates are extremely important for peer to peer syncing and bug fixes.");
                 ConsoleSystem.AnimatedText("Press any key to continue...");
                 LogSystem.Log("Modpack Update Available!");
                 Console.ReadKey();

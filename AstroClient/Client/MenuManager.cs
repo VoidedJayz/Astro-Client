@@ -1,5 +1,6 @@
 ﻿using AstroClient.Systems;
 using NAudio.SoundFont;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,6 +23,7 @@ namespace AstroClient.Client
         public static bool musicStarted = false;
         public static void Start()
         {
+            new Thread(MusicManager.Start).Start();
             DiscordManager.UpdatePresence("idle", "Main Menu");
             Console.Clear();
             GenerateMenu();
@@ -217,7 +219,7 @@ namespace AstroClient.Client
                 ConsoleSystem.CenterText("┌────────────────────────────────────────┐");
                 List<MenuOption> menuOptions = new List<MenuOption>
                 {
-                    new MenuOption { option = "Astro Menu", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption { option = "Game Controls", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
                     new MenuOption { option = "Brutal Company", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
                     new MenuOption { option = "Retro Shading", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
                     new MenuOption { option = "Saves Manager", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true },
@@ -249,7 +251,7 @@ namespace AstroClient.Client
                 switch (currOption)
                 {
                     case "0":
-                        ToggleFeature("Astro Menu", ModManager.AstroMenu);
+                        GameControlsMenu();
                         break;
                     case "1":
                         ToggleFeature("Brutal Company", ModManager.BrutalCompany);
@@ -310,6 +312,7 @@ namespace AstroClient.Client
             var save2 = SaveManager.GetStats("Save 2");
             var save3 = SaveManager.GetStats("Save 3");
             Colorful.Console.WriteLine(ConsoleSystem.CenterTextV2("Pick a save file. To pick one, just type the number."));
+            Colorful.Console.WriteLine(ConsoleSystem.CenterTextV2("Type the number 4 to return to main menu."));
             StringBuilder outputBuilder = new StringBuilder();
             outputBuilder.AppendLine(ConsoleSystem.CenterTextV2("┌────────────────────────────────────────────────────────────────────┐"));
             outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 1 │ {$"Credits: {save1[0]}",-14} │ Deadline: {save1[1],-10} │ Quota: {save1[2],-10} │"));
@@ -815,6 +818,123 @@ namespace AstroClient.Client
                     return input.Substring(0, maxLength - 3) + "...";
                 }
                 return input;
+            }
+        }
+        public static void GameControlsMenu()
+        {
+            if (!ModManager.CheckLethalCompany())
+            {
+                LogSystem.Log("Lethal Company not running");
+                ConsoleSystem.AnimatedText("Lethal Company must be running for this.");
+                Task.Delay(2000).Wait();
+                return;
+            }
+            LogSystem.Log("GameControlsMenu Function Started");
+            DiscordManager.UpdatePresence("cog", "Viewing Game Controls Menu");
+            try
+            {
+                ConsoleSystem.AppArt();
+                ConsoleSystem.SetColor(Color.DeepPink);
+                Console.WriteLine();
+                Process[] lc = Process.GetProcessesByName("Lethal Company");
+                if (lc.Length < 1)
+                {
+                    ConsoleSystem.AnimatedText("Lethal Company must be running for this.");
+                    Task.Delay(2000).Wait();
+                    return;
+                }
+                ConsoleSystem.CenterText("┌────────────────────────────────────────┐");
+                List<MenuOption> menuOptions = new List<MenuOption>
+                {
+                    new MenuOption { option = "God Mode", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true, warning = $"({(ModManager.GodMode ? "Enabled" : "Disabled")})" },
+                    new MenuOption { option = "Infinite Stamina", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true, warning = $"({(ModManager.InfiniteStamina ? "Enabled" : "Disabled")})" },
+                    new MenuOption { option = "Back", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true }
+                };
+                foreach (var menuOption in menuOptions)
+                {
+                    ConsoleSystem.GenerateOption(menuOption);
+                }
+                ConsoleSystem.CenterText("└────────────────────────────────────────┘\n");
+                var currOption = Console.ReadLine();
+                Console.WriteLine();
+                switch (currOption)
+                {
+                    case "0":
+                        ConsoleSystem.AnimatedText("Would you like to enable or disable God Mode?");
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Enable", identity = "0", matchMenu = false, newLine = true });
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Disable", identity = "1", matchMenu = false, newLine = true });
+                        var currOption2 = Console.ReadLine(); Console.WriteLine();
+                        switch (currOption2)
+                        {
+                            case "0":
+                                DiscordManager.UpdatePresence("cog", "Enabling God Mode");
+                                ModManager.GodMode = true;
+                                SendUpdate();
+                                ConsoleSystem.AnimatedText("God Mode Enabled!");
+                                break;
+                            case "1":
+                                DiscordManager.UpdatePresence("cog", "Disabling God Mode");
+                                ModManager.GodMode = false;
+                                SendUpdate();
+                                ConsoleSystem.AnimatedText("God Mode Disabled!");
+                                break;
+                            default:
+                                ConsoleSystem.SetColor(Color.DarkRed);
+                                ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
+                                Task.Delay(2000).Wait();
+                                break;
+                        }
+                        GameControlsMenu();
+                        break;
+                    case "1":
+                        ConsoleSystem.AnimatedText("Would you like to enable or disable Infinite Stamina?");
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Enable", identity = "0", matchMenu = false, newLine = true });
+                        ConsoleSystem.GenerateOption(new MenuOption() { option = "Disable", identity = "1", matchMenu = false, newLine = true });
+                        var currOption3 = Console.ReadLine(); Console.WriteLine();
+                        switch (currOption3)
+                        {
+                            case "0":
+                                DiscordManager.UpdatePresence("cog", "Enabling Infinite Stamina");
+                                ModManager.InfiniteStamina = true;
+                                SendUpdate();
+                                ConsoleSystem.AnimatedText("Infinite Stamina Enabled!");
+                                break;
+                            case "1":
+                                DiscordManager.UpdatePresence("cog", "Disabling Infinite Stamina");
+                                ModManager.InfiniteStamina = false;
+                                SendUpdate();
+                                ConsoleSystem.AnimatedText("Infinite Stamina Disabled!");
+                                break;
+                            default:
+                                ConsoleSystem.SetColor(Color.DarkRed);
+                                ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
+                                Task.Delay(2000).Wait();
+                                break;
+                        }
+                        GameControlsMenu();
+                        break;
+                    case "2":
+                        break;
+                    default:
+                        ConsoleSystem.SetColor(Color.DarkRed);
+                        ConsoleSystem.AnimatedText("Invalid Option. Please try again.");
+                        GameControlsMenu();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"Error in ControlsMenu {ex}");
+                return;
+            }
+            void SendUpdate()
+            {
+                var newData = new WebSocketObjects()
+                {
+                    GodMode = ModManager.GodMode,
+                    InfiniteStamina = ModManager.InfiniteStamina
+                };
+                Program.server.SendAsync(JsonConvert.SerializeObject(newData));
             }
         }
         public static void GetExtrasStates()

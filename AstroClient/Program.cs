@@ -2,6 +2,8 @@
 using AstroClient.Systems;
 using static AstroClient.Objects;
 using System.Drawing;
+using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace AstroClient
 {
@@ -10,24 +12,26 @@ namespace AstroClient
         public static string? lethalCompanyPath;
         public static string? bepInExPath;
         public static string? pluginsPath;
+        public static bool DebuggerMode = Debugger.IsAttached;
+        public static GameClient server;
 
         [STAThread]
         private static void Main(string[] args)
         {
             try
             {
-                // Main Stuffs
+                server = new GameClient();
                 LogSystem.Start();
                 WindowManager.Start();
-                DependencyManager.CheckDependencies();
-                ConfigSystem.GetConfig();
-                ServerManager.SetupData();
+                ServerManager.Start();
+                DownloadSystem.Start();
+                DependencyManager.Start();
+                ConfigSystem.Start();
                 SteamManager.Start();
                 DiscordManager.Start();
                 ModManager.Start();
                 SaveManager.Start();
-                new Thread(MusicManager.Start).Start();
-                UpdateManager.CheckAppUpdates();
+                UpdateManager.Start();
                 MenuManager.Start();
             }
             catch (Exception ex)
@@ -38,16 +42,20 @@ namespace AstroClient
             finally
             {
                 // Upon crashing, display a message to the user about the crash
-                string logDir = Directory.GetCurrentDirectory();
-                string logDirectory = $"{logDir}\\Logs";
-                ConsoleSystem.SetColor(System.Drawing.Color.DarkRed);
-                ConsoleSystem.AnimatedText("Astro Client has ran into a fatal error and cannot continue. ");
-                ConsoleSystem.AnimatedText("You can check the log file for more information.");
-                ConsoleSystem.AnimatedText($"Log Files are located at {logDirectory}.");
-                ConsoleSystem.AnimatedText("Press any key to exit.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Astro Client has requested to exit and cannot continue. ");
+                Console.WriteLine("You can check the log file for more information, it will be opened in your browser.");
+                Console.WriteLine("Press any key to exit.");
                 Console.ReadKey();
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = LogSystem.LatestLogPath,
+                    UseShellExecute = true
+                });
                 Environment.Exit(0);
             }
         }
+
+
     }
 }

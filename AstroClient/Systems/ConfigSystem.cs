@@ -37,7 +37,7 @@ namespace AstroClient.Systems
             }
         }
 
-        public static void GetConfig()
+        public static void Start()
         {
             try
             {

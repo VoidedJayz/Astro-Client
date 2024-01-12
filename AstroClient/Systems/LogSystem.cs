@@ -13,6 +13,7 @@ namespace AstroClient.Systems
 {
     public static class LogSystem
     {
+        public static string LatestLogPath => GetLogFilePath("ApplicationLog-Latest.html");
         private static readonly ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
         private static readonly string logDirectory = GetLogDirectory();
         private static readonly Stopwatch stopwatch = new Stopwatch();
