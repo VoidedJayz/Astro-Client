@@ -1,10 +1,6 @@
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\AstroLibrary.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\AstroLibrary.pdb
-C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\0Harmony.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Assembly-CSharp.dll
-C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\BepInEx.dll
-C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Mono.Cecil.dll
-C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\MonoMod.Utils.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\UnityEngine.CoreModule.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\UnityEngine.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\MonoMod.RuntimeDetour.dll
@@ -99,7 +95,6 @@ C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Releas
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Unity.Timeline.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Unity.Services.Core.Internal.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Unity.Services.Core.dll
-C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Newtonsoft.Json.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Unity.Profiling.Core.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\0Harmony.xml
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\BepInEx.xml
@@ -110,5 +105,10 @@ C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\obj\Releas
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\obj\Release\AstroLibrary.csproj.CopyComplete
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\obj\Release\AstroLibrary.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\obj\Release\AstroLibrary.pdb
-C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\LC_API.dll
+C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\0Harmony.dll
+C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\BepInEx.dll
 C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\DiscordRPC.dll
+C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\LC_API.dll
+C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Mono.Cecil.dll
+C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\MonoMod.Utils.dll
+C:\Users\voide\OneDrive\Desktop\Astro Client\AstroClient\AstroLibrary\bin\Release\Newtonsoft.Json.dll

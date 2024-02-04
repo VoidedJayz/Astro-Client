@@ -32,13 +32,12 @@ namespace AstroClient.Systems
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
             _httpListener.Start();
             LogSystem.Log($"WebSocket Server started at {ServerUri}", "Pipeline");
-
+            Task.Run(UpdateManager);
             while (true)
             {
                 var context = await _httpListener.GetContextAsync();
                 if (context.Request.IsWebSocketRequest)
                 {
-                    Task.Run(UpdateManager);
                     await HandleWebSocketClient(context);
                 }
                 else
@@ -51,8 +50,6 @@ namespace AstroClient.Systems
         private async void OnProcessExit(object sender, EventArgs e)
         {
             Shutdown().Wait();
-            ConsoleSystem.AnimatedText("Shutdown Server.");
-            Task.Delay(1000).Wait();
         }
         private async Task HandleWebSocketClient(HttpListenerContext context)
         {

@@ -260,7 +260,7 @@ namespace AstroLibrary
         }
         public async Task AstroLobbyManagerFunction()
         {
-            bool menu = true; // You may initialize this as needed
+            bool menu = true;
 
             LC_API.GameInterfaceAPI.GameState.WentIntoOrbit += () => UpdateStuff("Orbit Update triggered new data.");
             LC_API.GameInterfaceAPI.GameState.PlayerDied += () => UpdateStuff("Player Death triggered new data.");
@@ -268,7 +268,6 @@ namespace AstroLibrary
             LC_API.GameInterfaceAPI.GameState.ShipStartedLeaving += () => UpdateStuff("Ship leaving triggered new data.");
             SceneManager.sceneLoaded += (s, m) => 
             {
-                Task.Delay(4000).Wait();
                 if (s.name == "SampleSceneRelay")
                 {
                     menu = false; globalMenu = menu;

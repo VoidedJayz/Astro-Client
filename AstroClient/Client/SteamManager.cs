@@ -19,12 +19,7 @@ namespace AstroClient.Client
             try
             {
                 LogSystem.Log($"Attempting to launch Steam game with ID: {game}");
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = $"steam://rungameid/{game}",
-                    UseShellExecute = true
-                };
-                Process.Start(startInfo);
+                FileSystem.OpenFolderOrFile($"steam://rungameid/{game}");
                 LogSystem.Log("Steam game launched successfully.");
             }
             catch (Exception ex)
@@ -42,13 +37,7 @@ namespace AstroClient.Client
             {
                 LogSystem.Log($"Attempting to navigate to Steam game details with AppID: {appId}");
 
-                // Start the process to navigate to the game's details page in Steam
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = steamUrl,
-                    UseShellExecute = true // This is required to open URLs
-                };
-                Process.Start(startInfo);
+                FileSystem.OpenFolderOrFile(steamUrl);
 
                 // Attempt to close the game by its process name
                 Process[] processes = Process.GetProcessesByName("Lethal Company");

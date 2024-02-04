@@ -7,7 +7,9 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AstroClient.Client
 {
@@ -91,8 +93,10 @@ namespace AstroClient.Client
         }
         public static void InstallMods()
         {
+            bool cancellationFlag = false;
             try
             {
+                Console.Clear();
                 LogSystem.Log("Starting mod installation process.");
                 DiscordManager.UpdatePresence("cog", "Installing Mods");
                 if (CheckLethalCompany())
@@ -108,24 +112,27 @@ namespace AstroClient.Client
 
                 if (CheckForExistingMods())
                 {
-                    ConsoleSystem.SetColor(Color.DarkRed);
-                    ConsoleSystem.AnimatedText("Existing Mods Found. Please remove them before installing our pack.");
-                    ConsoleSystem.AnimatedText("You can use option 2 on the main menu to remove the mods.");
-                    ConsoleSystem.AnimatedText("If you care about your mods, please back them up using option 6 before removing them.");
-                    ConsoleSystem.AnimatedText("Press any key to continue...");
-                    Console.ReadKey();
-                    LogSystem.Log("Existing mods found. Aborting installation.");
-                    return;
+                    LogSystem.Log("Existing mods found. Backing up original mods before overwriting.");
+                    ConsoleSystem.SetColor(Color.Cyan);
+                    ConsoleSystem.AnimatedText("You already have mods, They will be backed up into Astros root dir.");
+                    BackupMods();
+                    UninstallMods();
                 }
 
                 ConsoleSystem.SetColor(Color.Magenta);
-                ConsoleSystem.AnimatedText("Downloading Zip...");
+                ConsoleSystem.AnimatedText("Downloading Zip... (this may take awhile)");
                 LogSystem.Log("Initiating mod pack download.");
 
                 try
                 {
+                    // Start the elapsed time updater in a separate thread
+                    Task.Run(() => UpdateElapsedTime(DateTime.Now));
+
                     LogSystem.Log("Mod pack download started.");
                     DownloadSystem.ServerDownload(DownloadSystem.AppFiles["modpack"], $"{Program.lethalCompanyPath}\\temp_astro.zip");
+
+                    // Download completed, set the cancellation flag to stop the updater
+                    cancellationFlag = true;
                 }
                 catch (Exception ex)
                 {
@@ -173,7 +180,7 @@ namespace AstroClient.Client
                 ConsoleSystem.AnimatedText("Mods installation complete.");
                 FileSystem.DeleteFile($"{Program.lethalCompanyPath}\\temp_astro.zip");
                 LogSystem.Log("Mod pack installation complete.");
-                Task.Delay(2500).Wait();
+                MessageBox.Show("Mods Installed!", "Astro Client", MessageBoxButtons.OK, MessageBoxIcon.Information);   
             }
             catch (Exception ex)
             {
@@ -186,11 +193,33 @@ namespace AstroClient.Client
                 Console.Clear();
                 LogSystem.Log("Mod installation process finished.");
             }
+            async Task UpdateElapsedTime(DateTime startTime)
+            {
+                try
+                {
+                    while (!cancellationFlag)
+                    {
+                        TimeSpan elapsed = DateTime.Now - startTime;
+                        int elapsedSeconds = (int)elapsed.TotalSeconds;
+                        int elapsedMilliseconds = elapsed.Milliseconds;
+
+                        Console.Clear(); // Clear the console line
+                        Console.WriteLine($"Downloading Zip... Elapsed Time: {elapsedSeconds} seconds {elapsedMilliseconds} ms");
+
+                        await Task.Delay(50); // Update every 50 milliseconds
+                    }
+                }
+                catch (Exception)
+                {
+                    // Handle exceptions if needed
+                }
+            }
         }
         public static void UninstallMods()
         {
             try
             {
+                Console.Clear();
                 LogSystem.Log("Starting mod removal process.");
                 DiscordManager.UpdatePresence("cog", "Removing Mods");
                 if (CheckLethalCompany())
@@ -240,7 +269,8 @@ namespace AstroClient.Client
                     ConsoleSystem.SetColor(Color.Green);
                     ConsoleSystem.AnimatedText("All mod files removed!");
                     LogSystem.Log("All mod files have been successfully removed.");
-                    Task.Delay(2500).Wait();
+                    MessageBox.Show("Mods Removed!", "Astro Client", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Task.Delay(1000).Wait();
                 }
                 else
                 {
@@ -265,6 +295,7 @@ namespace AstroClient.Client
         {
             try
             {
+                Console.Clear();
                 LogSystem.Log("Starting mod backup process.");
                 DiscordManager.UpdatePresence("cog", "Backing Up Mods");
                 if (CheckLethalCompany())
@@ -511,6 +542,30 @@ namespace AstroClient.Client
                     Task.Delay(2500).Wait();
                     return;
                 }
+            }
+        }
+        public static void VRMode(bool state)
+        {
+            try
+            {
+                if (state == true)
+                {
+                    FileSystem.ReplaceIniValue($"{Program.lethalCompanyPath}\\BepInEx\\config\\io.daxcess.lcvr.cfg", "General", "DisableVR", "false");
+                    FileSystem.ReplaceIniValue($"{Program.lethalCompanyPath}\\BepInEx\\config\\FlipMods.HotbarPlus.cfg", "Client-side", "UseDefaultItemSwapInterval", "true");
+                    FileSystem.MoveFile($"{Program.pluginsPath}\\CrossHair.dll", $"{Program.bepInExPath}\\core\\CrossHair.dll");
+                    FileSystem.MoveFile($"{Program.pluginsPath}\\TooManyEmotes.dll", $"{Program.bepInExPath}\\core\\TooManyEmotes.dll");
+                }
+                else
+                {
+                    FileSystem.ReplaceIniValue($"{Program.lethalCompanyPath}\\BepInEx\\config\\io.daxcess.lcvr.cfg", "General", "DisableVR", "true");
+                    FileSystem.ReplaceIniValue($"{Program.lethalCompanyPath}\\BepInEx\\config\\FlipMods.HotbarPlus.cfg", "Client-side", "UseDefaultItemSwapInterval", "false");
+                    FileSystem.MoveFile($"{Program.bepInExPath}\\core\\CrossHair.dll", $"{Program.pluginsPath}\\CrossHair.dll");
+                    FileSystem.MoveFile($"{Program.bepInExPath}\\core\\TooManyEmotes.dll", $"{Program.pluginsPath}\\TooManyEmotes.dll");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"Error setting VR Mode. {ex.Message}");
             }
         }
         public static bool CheckLethalCompany()

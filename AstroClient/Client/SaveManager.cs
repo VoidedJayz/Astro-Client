@@ -78,9 +78,9 @@ namespace AstroClient.Client
                 LogSystem.ReportError("Error getting save stats: " + ex);
                 return new List<string>()
                 {
-                    "???",
-                    "???",
-                    "???"
+                    "0000",
+                    "0000",
+                    "0000"
                 };
             }
         }

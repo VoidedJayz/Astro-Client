@@ -31,7 +31,7 @@ namespace AstroClient
 
         public void Report(double value)
         {
-            value = Math.Max(0, Math.Min(1, value));
+            value = Math.Max(0, Math.Min(100, value)); // Adjust the range to 0-100
             Interlocked.Exchange(ref currentProgress, value);
         }
 
@@ -42,6 +42,7 @@ namespace AstroClient
                 if (disposed) return;
 
                 int consoleWidth = Console.WindowWidth - 10; // Adjusted for padding and percentage
+                int consoleHeight = Console.WindowHeight;
                 int progressBlockCount = (int)(currentProgress * consoleWidth);
                 int percent = (int)(currentProgress * 100);
                 string text = string.Format("\r{0,-3}% {1}{2}{3}{4} {5}",
@@ -52,6 +53,7 @@ namespace AstroClient
                     endDelimiter,
                     animation[animationIndex++ % animation.Length]);
 
+                Console.SetCursorPosition(0, consoleHeight - 1); // Move to the last line
                 ConsoleSystem.SetColor(System.Drawing.Color.DeepPink);
                 Console.Write(text);
                 Console.ResetColor();
@@ -71,9 +73,11 @@ namespace AstroClient
             lock (timer)
             {
                 disposed = true;
+                Console.SetCursorPosition(0, Console.WindowHeight - 1); // Move to the last line
                 Console.Write("\r" + new string(' ', currentText.Length) + "\r"); // Clear the line
                 timer.Dispose();
             }
         }
     }
+
 }

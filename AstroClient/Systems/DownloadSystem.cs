@@ -19,7 +19,7 @@ namespace AstroClient.Systems
 
         public static void Start()
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd($"Astro Client App | Yo Mam Gei | {UpdateManager.Version}");
             if (ServerManager.useSecureCDN)
             {
                 cdn = "https://storage.bunnycdn.com/astroswrld/Client/";
@@ -41,49 +41,46 @@ namespace AstroClient.Systems
             {
                 try
                 {
-                    Task downloadTask = Task.Run(async () =>
+                    LogSystem.Log($"Starting download: {link} -> {dest}", "Download System");
+
+                    string downloadLink = ServerManager.useSecureCDN
+                        ? $"{link}?accessKey={accessKey}"
+                        : link;
+
+                    HttpResponseMessage response;
+                    var stopwatch = new System.Diagnostics.Stopwatch();
+
+                    stopwatch.Start();
+                    response = Task.Run(() => client.GetAsync(downloadLink)).Result;
+                    stopwatch.Stop();
+
+                    LogSystem.Log($"Time taken to get response: {stopwatch.ElapsedMilliseconds} ms", "Download System");
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        string downloadLink = $"{link}?accessKey={accessKey}";
-
-                        HttpResponseMessage response = await client.GetAsync(downloadLink);
-
-                        if (response.IsSuccessStatusCode)
+                        using (Stream contentStream = Task.Run(() => response.Content.ReadAsStreamAsync()).Result)
                         {
-                            using (Stream contentStream = await response.Content.ReadAsStreamAsync())
+                            long totalSizeBytes = response.Content.Headers.ContentLength ?? -1;
+                            LogSystem.Log($"Total file size: {FormatFileSize(totalSizeBytes)}", "Download System");
+
+                            using (FileStream fileStream = File.Create(dest))
                             {
-                                long totalSizeBytes = contentStream.Length;
-                                string totalSizeFormatted;
-                                if (totalSizeBytes >= 1024 * 1024)
-                                {
-                                    double totalSizeMB = (double)totalSizeBytes / (1024 * 1024);
-                                    totalSizeFormatted = $"{totalSizeMB:F2} MB";
-                                }
-                                else if (totalSizeBytes >= 1024)
-                                {
-                                    double totalSizeKB = (double)totalSizeBytes / 1024;
-                                    totalSizeFormatted = $"{totalSizeKB:F2} KB";
-                                }
-                                else
-                                {
-                                    totalSizeFormatted = $"{totalSizeBytes} bytes";
-                                }
-                                using (FileStream fileStream = File.Create(dest))
-                                {
-                                    await contentStream.CopyToAsync(fileStream);
-                                    LogSystem.Log($"[{dest}] Downloaded Successfully, Total Size: {totalSizeFormatted}", "Download System");
-                                    LogSystem.Log($"[{dest}] Server Responded With: {response.StatusCode} {response.ReasonPhrase} {response.Headers.Date}", "Download System");
-                                }
+                                contentStream.Seek(0, SeekOrigin.Begin);
+                                contentStream.CopyTo(fileStream);
                             }
-                        }
-                        else
-                        {
-                            LogSystem.ReportError($"Error downloading {dest} | {response.StatusCode}", "Download System");
-                        }
-                        response.Dispose();
-                    });
 
-                    downloadTask.Wait();
-                    break;
+                            LogSystem.Log($"Download completed. Total bytes read: {totalSizeBytes}", "Download System");
+                            LogSystem.Log($"[{dest}] Downloaded Successfully, Total Size: {FormatFileSize(totalSizeBytes)}", "Download System");
+                            LogSystem.Log($"[{dest}] Server Responded With: {response.StatusCode} {response.ReasonPhrase} {response.Headers.Date}", "Download System");
+                        }
+                    }
+                    else
+                    {
+                        LogSystem.ReportError($"Error downloading {dest} | {response.StatusCode}", "Download System");
+                    }
+
+                    response.Dispose();
+                    break; // Successful download, break out of the retry loop
                 }
                 catch (Exception ex)
                 {
@@ -97,6 +94,24 @@ namespace AstroClient.Systems
                         LogSystem.ReportError($"Failed after {maxRetries} retries. Full Error message: {ex}", "Download System");
                     }
                 }
+            }
+        }
+
+        private static string FormatFileSize(long bytes)
+        {
+            if (bytes >= 1024 * 1024)
+            {
+                double sizeMB = (double)bytes / (1024 * 1024);
+                return $"{sizeMB:F2} MB";
+            }
+            else if (bytes >= 1024)
+            {
+                double sizeKB = (double)bytes / 1024;
+                return $"{sizeKB:F2} KB";
+            }
+            else
+            {
+                return $"{bytes} bytes";
             }
         }
 

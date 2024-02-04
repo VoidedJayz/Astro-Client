@@ -1,4 +1,5 @@
 ﻿using AstroClient.Systems;
+using NAudio.Utils;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,6 @@ namespace AstroClient.Client
         public static bool rerollSong = false;
         public static bool prioritySong = false;
         public static bool disableConsoleTitle = false;
-        public static AudioFileReader? audioFileGlobal;
         public static MusicLibrary library = new MusicLibrary();
         public static void Start()
         {
@@ -27,11 +27,11 @@ namespace AstroClient.Client
 
             try
             {
-                audioFileGlobal = new AudioFileReader(songPath);
+                var audioFile = new AudioFileReader(songPath);
                 LogSystem.Log($"Starting playback for file: {songPath}");
                 using (var outputDevice = new WaveOutEvent())
                 {
-                    outputDevice.Init(audioFileGlobal);
+                    outputDevice.Init(audioFile);
                     outputDevice.PlaybackStopped += (sender, e) =>
                     {
                         LogSystem.Log("Playback stopped.");
@@ -40,10 +40,10 @@ namespace AstroClient.Client
                         {
                             LogSystem.Log("Rerolling song due to reroll request.");
                             outputDevice.Stop();
-                            audioFileGlobal.Dispose();
+                            audioFile.Dispose();
                             ReRoll();
-                            audioFileGlobal = new AudioFileReader(songPath);
-                            outputDevice.Init(audioFileGlobal);
+                            audioFile = new AudioFileReader(songPath);
+                            outputDevice.Init(audioFile);
                             outputDevice.Play();
                             rerollSong = false;
                             return;
@@ -56,37 +56,36 @@ namespace AstroClient.Client
                         if (ConfigSystem.loadedConfig.backgroundMusic)
                         {
                             outputDevice.Stop();
-                            audioFileGlobal.Dispose();
+                            audioFile.Dispose();
                             ReRoll();
-                            audioFileGlobal = new AudioFileReader(songPath);
-                            outputDevice.Init(audioFileGlobal);
+                            audioFile = new AudioFileReader(songPath);
+                            outputDevice.Init(audioFile);
                             outputDevice.Play();
                             LogSystem.Log("Restarting playback with new song after reroll.");
                         }
                     };
                     outputDevice.Volume = ConfigSystem.loadedConfig.musicVolume;
                     LogSystem.Log("Audio playback volume set.");
-
                     while (true)
                     {
-                        audioFileGlobal = new AudioFileReader(songPath);
+                        audioFile = new AudioFileReader(songPath);
                         if (rerollSong)
                         {
                             outputDevice.Stop();
-                            audioFileGlobal.Dispose();
+                            audioFile.Dispose();
                             ReRoll();
-                            audioFileGlobal = new AudioFileReader(songPath);
-                            outputDevice.Init(audioFileGlobal);
+                            audioFile = new AudioFileReader(songPath);
+                            outputDevice.Init(audioFile);
                             rerollSong = false;
                             LogSystem.Log("Song rerolled and playback restarted.");
                         }
                         if (prioritySong)
                         {
                             outputDevice.Stop();
-                            audioFileGlobal.Dispose();
+                            audioFile.Dispose();
                             CheckPrioritySong();
-                            audioFileGlobal = new AudioFileReader(songPath);
-                            outputDevice.Init(audioFileGlobal);
+                            audioFile = new AudioFileReader(songPath);
+                            outputDevice.Init(audioFile);
                             prioritySong = false;
                             LogSystem.Log("Priority song updated and playback restarted.");
                         }
@@ -97,8 +96,8 @@ namespace AstroClient.Client
                             {
                                 outputDevice.Volume = ConfigSystem.loadedConfig.musicVolume;
                                 outputDevice.Play();
-                                string formattedCurrentPosition = String.Format("{0:mm\\:ss}", audioFileGlobal.CurrentTime);
-                                string formattedEndPosition = String.Format("{0:mm\\:ss}", audioFileGlobal.TotalTime);
+                                string formattedCurrentPosition = String.Format("{0:mm\\:ss}", outputDevice.GetPositionTimeSpan());
+                                string formattedEndPosition = String.Format("{0:mm\\:ss}", audioFile.TotalTime);
                                 Console.Title = $"Astro Client {UpdateManager.Version} | {songKey} | {formattedCurrentPosition}/{formattedEndPosition}";
                             }
                             else
@@ -113,7 +112,6 @@ namespace AstroClient.Client
             catch (Exception ex)
             {
                 LogSystem.ReportError($"Error in MusicHandler: {ex}");
-                Console.WriteLine($"Error in MusicHandler. Check logs for details.");
             }
         }
         private static void OnDataAvailable(object sender, WaveInEventArgs args)

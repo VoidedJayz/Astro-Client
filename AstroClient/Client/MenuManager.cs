@@ -20,10 +20,10 @@ namespace AstroClient.Client
         public static string astroState;
         public static string richState;
         public static string retroState;
+        public static string vrState;
         public static bool musicStarted = false;
         public static void Start()
         {
-            new Thread(MusicManager.Start).Start();
             DiscordManager.UpdatePresence("idle", "Main Menu");
             Console.Clear();
             GenerateMenu();
@@ -100,7 +100,7 @@ namespace AstroClient.Client
                         ConsoleSystem.SetColor(Color.Cyan);
                         ConsoleSystem.AnimatedText("Opening...");
                         DiscordManager.UpdatePresence("cog", "Opening Folder");
-                        Process.Start("explorer.exe", $@"{Program.lethalCompanyPath}");
+                        FileSystem.OpenFolderOrFile(Program.lethalCompanyPath);
                         Task.Delay(1000).Wait();
                         Console.Clear();
                         break;
@@ -195,17 +195,6 @@ namespace AstroClient.Client
                 LogSystem.Log("GenerateMenu Function Ended");
             }
         }
-        public static void ChangeLog()
-        {
-            Colorful.Console.ReplaceAllColorsWithDefaults();
-            Console.Clear();
-            ConsoleSystem.AppArt();
-            ConsoleSystem.AnimatedText(ServerManager.currentChangelog);
-            Console.WriteLine();
-            ConsoleSystem.AnimatedText("Press any key to continue...");
-            Console.ReadKey();
-            Console.Clear();
-        }
         public static void ExtrasMenu()
         {
             LogSystem.Log("ExtrasMenu Function Started");
@@ -220,10 +209,11 @@ namespace AstroClient.Client
                 List<MenuOption> menuOptions = new List<MenuOption>
                 {
                     new MenuOption { option = "Game Controls", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
-                    new MenuOption { option = "Brutal Company", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
-                    new MenuOption { option = "Retro Shading", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                    new MenuOption { option = "Brutal Company", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true, warning = brutalState },
+                    new MenuOption { option = "Retro Shading", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true, warning = retroState },
                     new MenuOption { option = "Saves Manager", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true },
-                    new MenuOption { option = "Back", identity = "4", color = Color.BlueViolet, matchMenu = true, newLine = true }
+                    new MenuOption { option = "VR Mode", identity = "4", color = Color.BlueViolet, matchMenu = true, newLine = true, warning = vrState },
+                    new MenuOption { option = "Back", identity = "5", color = Color.BlueViolet, matchMenu = true, newLine = true }
                 };
 
                 foreach (var menuOption in menuOptions)
@@ -263,6 +253,9 @@ namespace AstroClient.Client
                         SavesMenu();
                         break;
                     case "4":
+                        ToggleFeature("VR Mode", ModManager.VRMode);
+                        break;
+                    case "5":
                         LogSystem.Log("Returning to Main Menu");
                         break;
                     default:
@@ -315,9 +308,9 @@ namespace AstroClient.Client
             Colorful.Console.WriteLine(ConsoleSystem.CenterTextV2("Type the number 4 to return to main menu."));
             StringBuilder outputBuilder = new StringBuilder();
             outputBuilder.AppendLine(ConsoleSystem.CenterTextV2("┌────────────────────────────────────────────────────────────────────┐"));
-            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 1 │ {$"Credits: {save1[0]}",-14} │ Deadline: {save1[1],-10} │ Quota: {save1[2],-10} │"));
-            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 2 │ {$"Credits: {save2[0]}",-14} │ Deadline: {save2[1],-10} │ Quota: {save2[2],-10} │"));
-            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 3 │ {$"Credits: {save3[0]}",-14} │ Deadline: {save3[1],-10} │ Quota: {save3[2],-10} │"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 1 │ {$"Credits: {save1[0]}",-14} │ Deadline: {int.Parse(save1[1].ToString()[0].ToString()),-10} │ Quota: {save1[2],-10} │"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 2 │ {$"Credits: {save2[0]}",-14} │ Deadline: {int.Parse(save2[1].ToString()[0].ToString()),-10} │ Quota: {save2[2],-10} │"));
+            outputBuilder.AppendLine(ConsoleSystem.CenterTextV2($"│ Save 3 │ {$"Credits: {save3[0]}",-14} │ Deadline: {int.Parse(save3[1].ToString()[0].ToString()),-10} │ Quota: {save3[2],-10} │"));
             outputBuilder.AppendLine(ConsoleSystem.CenterTextV2("└────────────────────────────────────────────────────────────────────┘"));
             string output = outputBuilder.ToString();
             Colorful.Console.WriteWithGradient(output, Color.BlueViolet, Color.Wheat, 10);
@@ -449,95 +442,6 @@ namespace AstroClient.Client
                         SavesMenu();
                         break;
                 }
-            }
-        }
-        public static void GenerateSaveMenu(string Save)
-        {
-            LogSystem.Log($"GenerateSaveMenu Function Started: {Save}");
-            ConsoleSystem.AppArt();
-            ConsoleSystem.SetColor(Color.DeepPink);
-            Console.WriteLine();
-            ConsoleSystem.CenterText("Select the data you wish to modify");
-            ConsoleSystem.CenterText($"┌──── {Save} ────────────────────────────┐");
-            List<MenuOption> menuOptions = new List<MenuOption>
-            {
-                new MenuOption { option = "Credits / Currency", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
-                new MenuOption { option = "Time Left Until Quota", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
-                new MenuOption { option = "Quota Amount", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
-                new MenuOption { option = "Back", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true }
-            };
-
-            foreach (var menuOption in menuOptions)
-            {
-                ConsoleSystem.GenerateOption(menuOption);
-            }
-
-            string updatedText = "└────────────────────────────────────────┘\n\n";
-            ConsoleSystem.CenterText(updatedText);
-
-            var currOption = Console.ReadLine();
-            Console.WriteLine();
-            switch (currOption)
-            {
-                case "0":
-                    ConsoleSystem.AnimatedText("Enter the new amount of credits you wish to have.");
-                    var currOption2 = Console.ReadLine();
-                    Console.WriteLine();
-                    LogSystem.Log($"User entered {currOption2}");
-                    if (currOption2 != null)
-                    {
-                        var newAmount = Convert.ToInt32(currOption2);
-                        var newData = new GameData()
-                        {
-                            CoinCount = newAmount
-                        };
-                        SaveManager.ModifyGameData(Save, newData);
-                    }
-                    break;
-                case "1":
-                    ConsoleSystem.AnimatedText("Enter the new amount of time you wish to have.");
-                    ConsoleSystem.AnimatedText("Example: 1 = 1 Day. Please no more than 3.");
-                    var currOption3 = Console.ReadLine();
-                    Console.WriteLine();
-                    LogSystem.Log($"User entered {currOption3}");
-                    if (currOption3 != null)
-                    {
-                        var newAmount = Convert.ToInt32(currOption3);
-                        if (newAmount > 3)
-                        {
-                            ConsoleSystem.SetColor(Color.DarkRed);
-                            ConsoleSystem.AnimatedText("Operation Failed, above game limits.");
-                            LogSystem.Log("User entered a value above game limits.");
-                            break;
-                        }
-                        var newData = new GameData()
-                        {
-                            TimeLeft = newAmount
-                        };
-                        SaveManager.ModifyGameData(Save, newData);
-                    }
-                    break;
-                case "2":
-                    ConsoleSystem.AnimatedText("Enter the new amount of quota you wish to have.");
-                    var currOption4 = Console.ReadLine();
-                    Console.WriteLine();
-                    LogSystem.Log($"User entered {currOption4}");
-                    if (currOption4 != null)
-                    {
-                        var newAmount = Convert.ToInt32(currOption4);
-                        var newData = new GameData()
-                        {
-                            QuotaAmount = newAmount
-                        };
-                        SaveManager.ModifyGameData(Save, newData);
-                    }
-                    break;
-                case "3":
-                    break;
-                default:
-                    ConsoleSystem.SetColor(Color.DarkRed);
-                    ConsoleSystem.AnimatedText("Invalid Option.");
-                    break;
             }
         }
         public static void SettingsMenu()
@@ -737,7 +641,7 @@ namespace AstroClient.Client
                 i++;
                 ConsoleSystem.GenerateOption(new MenuOption()
                 {
-                    option = TruncateName(song.Name, 35),
+                    option = TruncateName(song.Name, 32),
                     identity = song.Number.ToString(),
                     color = Color.BlueViolet,
                     matchMenu = true,
@@ -762,7 +666,7 @@ namespace AstroClient.Client
                 matchMenu = true,
                 newLine = true
             });
-            ConsoleSystem.CenterText("└────────────────────────────────────────┘\n");
+            ConsoleSystem.CenterText("└────────────────────────────────────────┘");
 
             try
             {
@@ -937,6 +841,98 @@ namespace AstroClient.Client
                 Program.server.SendAsync(JsonConvert.SerializeObject(newData));
             }
         }
+        // Extras
+        public static void GenerateSaveMenu(string Save)
+        {
+            LogSystem.Log($"GenerateSaveMenu Function Started: {Save}");
+            ConsoleSystem.AppArt();
+            ConsoleSystem.SetColor(Color.DeepPink);
+            Console.WriteLine();
+            ConsoleSystem.CenterText("Select the data you wish to modify");
+            ConsoleSystem.CenterText($"┌──── {Save} ────────────────────────────┐");
+            List<MenuOption> menuOptions = new List<MenuOption>
+            {
+                new MenuOption { option = "Credits / Currency", identity = "0", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Time Left Until Quota", identity = "1", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Quota Amount", identity = "2", color = Color.BlueViolet, matchMenu = true, newLine = true },
+                new MenuOption { option = "Back", identity = "3", color = Color.BlueViolet, matchMenu = true, newLine = true }
+            };
+
+            foreach (var menuOption in menuOptions)
+            {
+                ConsoleSystem.GenerateOption(menuOption);
+            }
+
+            string updatedText = "└────────────────────────────────────────┘\n\n";
+            ConsoleSystem.CenterText(updatedText);
+
+            var currOption = Console.ReadLine();
+            Console.WriteLine();
+            switch (currOption)
+            {
+                case "0":
+                    ConsoleSystem.AnimatedText("Enter the new amount of credits you wish to have.");
+                    var currOption2 = Console.ReadLine();
+                    Console.WriteLine();
+                    LogSystem.Log($"User entered {currOption2}");
+                    if (currOption2 != null)
+                    {
+                        var newAmount = Convert.ToInt32(currOption2);
+                        var newData = new GameData()
+                        {
+                            CoinCount = newAmount
+                        };
+                        SaveManager.ModifyGameData(Save, newData);
+                    }
+                    break;
+                case "1":
+                    ConsoleSystem.AnimatedText("Enter the new amount of time you wish to have.");
+                    ConsoleSystem.AnimatedText("Example: 1 = 1 Day. Please no more than 3.");
+                    var currOption3 = Console.ReadLine();
+                    Console.WriteLine();
+                    LogSystem.Log($"User entered {currOption3}");
+                    if (currOption3 != null)
+                    {
+                        var newAmount = Convert.ToInt32(currOption3);
+                        if (newAmount > 3 || newAmount < 1)
+                        {
+                            ConsoleSystem.SetColor(Color.DarkRed);
+                            ConsoleSystem.AnimatedText("Operation Failed, above game limits.");
+                            LogSystem.Log("User entered a value defying game limits.");
+                            break;
+                        }
+                        newAmount = (newAmount == 1) ? 1274 : (newAmount == 2) ? 2255 : (newAmount == 3) ? 3240 : newAmount;
+
+                        var newData = new GameData()
+                        {
+                            TimeLeft = newAmount
+                        };
+                        SaveManager.ModifyGameData(Save, newData);
+                    }
+                    break;
+                case "2":
+                    ConsoleSystem.AnimatedText("Enter the new amount of quota you wish to have.");
+                    var currOption4 = Console.ReadLine();
+                    Console.WriteLine();
+                    LogSystem.Log($"User entered {currOption4}");
+                    if (currOption4 != null)
+                    {
+                        var newAmount = Convert.ToInt32(currOption4);
+                        var newData = new GameData()
+                        {
+                            QuotaAmount = newAmount
+                        };
+                        SaveManager.ModifyGameData(Save, newData);
+                    }
+                    break;
+                case "3":
+                    break;
+                default:
+                    ConsoleSystem.SetColor(Color.DarkRed);
+                    ConsoleSystem.AnimatedText("Invalid Option.");
+                    break;
+            }
+        }
         public static void GetExtrasStates()
         {
             if (FileSystem.FileExists($"{Program.pluginsPath}\\AstroMenu.dll"))
@@ -971,6 +967,14 @@ namespace AstroClient.Client
             {
                 retroState = "Not Installed";
             }
+            if (CheckForVR() == true)
+            {
+                vrState = "Enabled";
+            }
+            else
+            {
+                vrState = "Disabled";
+            }
         }
         public static bool CheckForExistingShaders()
         {
@@ -992,6 +996,29 @@ namespace AstroClient.Client
                 return true;
             }
             return false;
+        }
+        public static bool CheckForVR()
+        {
+            if (FileSystem.ReadIniValue($"{Program.lethalCompanyPath}\\BepInEx\\config\\io.daxcess.lcvr.cfg", "General", "DisableVR") == "true")
+            {
+                return false;
+            }
+            return true;
+        }
+        public static void ChangeLog()
+        {
+            ConsoleSystem.holdResize = true;
+            Console.SetWindowSize(100, 45);
+            Console.SetBufferSize(100, 45);
+            Colorful.Console.ReplaceAllColorsWithDefaults();
+            Console.Clear();
+            ConsoleSystem.AppArt();
+            Colorful.Console.WriteWithGradient(ServerManager.currentChangelog, Color.BlueViolet, Color.White, 10);
+            Console.WriteLine();
+            ConsoleSystem.AnimatedText("Press any key to continue...");
+            Console.ReadKey();
+            Console.Clear();
+            ConsoleSystem.holdResize = false;
         }
     }
 }

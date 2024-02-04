@@ -24,6 +24,8 @@ namespace AstroClient.Client
         {
             try
             {
+                LogSystem.Log("Opening WebSocket to Localization..");
+                Program.server.Start();
                 LogSystem.Log("Starting SetupData.");
                 ServerData data = GetServerData();
                 latestVersion = new Version(data.version);

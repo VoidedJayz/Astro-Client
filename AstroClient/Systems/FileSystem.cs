@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -269,6 +270,29 @@ namespace AstroClient.Systems
             }
         }
 
+        public static void OpenFolderOrFile(string path)
+        {
+            try
+            {
+                if (DirectoryExists(path) || FileExists(path))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = path,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    LogSystem.ReportError($"Path not found: {path}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogSystem.ReportError($"Error opening folder or file: {ex.Message}");
+            }
+        }
+
         public static void ReplaceIniValue(string filePath, string section, string key, string newValue)
         {
             List<string> lines = new List<string>(File.ReadAllLines(filePath));
@@ -298,6 +322,55 @@ namespace AstroClient.Systems
 
             File.WriteAllLines(filePath, lines);
         }
+        public static string ReadIniValue(string filePath, string section, string key)
+        {
+            string pattern = $@"^\s*{key}\s*=\s*(.*)\s*$";
 
+            List<string> lines = new List<string>();
+            try
+            {
+                lines.AddRange(File.ReadAllLines(filePath));
+            }
+            catch (FileNotFoundException)
+            {
+                LogSystem.ReportError("The configuration file does not exist.");
+                return null;
+            }
+            catch (IOException ex)
+            {
+                LogSystem.ReportError($"An error occurred while reading the configuration file: {ex.Message}");
+                return null;
+            }
+
+            bool sectionFound = false;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string line = lines[i].Trim();
+
+                if (line == $"[{section}]")
+                {
+                    sectionFound = true;
+                    continue;
+                }
+
+                if (sectionFound)
+                {
+                    Match match = Regex.Match(line, pattern);
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                    else if (line.StartsWith("["))
+                    {
+                        LogSystem.Log($"Key {key} not found in section {section}.");
+                        break; // Reached the end of the section, stop searching
+                    }
+                }
+            }
+
+            LogSystem.Log($"Key {key} not found in section {section}.");
+            return null; // Key not found
+        }
     }
 }

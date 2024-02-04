@@ -11,6 +11,7 @@ namespace AstroClient.Systems
 {
     internal class ConsoleSystem
     {
+        public static bool holdResize = false;
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -50,13 +51,24 @@ namespace AstroClient.Systems
             string centeredText = new string(' ', padding) + text;
             return centeredText;
         }
+        public static void ClearLine()
+        {
+            int currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, currentLineCursor);
+        }
         public static async Task KeepWindowSize()
         {
             while (true)
             {
+                await Task.Delay(50);
+                if (holdResize == true)
+                {
+                    continue;
+                }
                 Console.SetWindowSize(100, 30);
                 Console.SetBufferSize(100, 30);
-                await Task.Delay(50);
             }
         }
         public static void GenerateOption(MenuOption options, int pos = 27)

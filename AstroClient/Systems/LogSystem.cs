@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AstroClient.Systems
 {
@@ -15,7 +16,7 @@ namespace AstroClient.Systems
     {
         public static string LatestLogPath => GetLogFilePath("ApplicationLog-Latest.html");
         private static readonly ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
-        private static readonly string logDirectory = GetLogDirectory();
+        public static readonly string logDirectory = GetLogDirectory();
         private static readonly Stopwatch stopwatch = new Stopwatch();
         private static bool isProcessing = false;
 
